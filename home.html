@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NeuraSync: A wearable device that detects emotions like anger, frustration, anxiety, and stress in real-time, providing feedback to help you achieve inner calm and emotional balance.">
+    <title>NeuraSync - Embrace Inner Calm</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #010A13; /* Even darker, more immersive background */
+            --panel-bg: rgba(18, 29, 44, 0.4); /* Frosted glass effect */
+            --panel-border: rgba(40, 60, 80, 0.6);
+            --text-color: #E6EBF0;
+            --text-secondary: #A0B0C0;
+            --primary-color: #00C2FF; /* Slightly brighter blue */
+            --accent-cyan: #00F6FF;
+            --accent-problem: #FF708C; /* Softer red */
+            --accent-solution: #8AFFB0; /* Brighter green */
+            --glow-strong: 0 0 20px var(--primary-color), 0 0 40px var(--accent-cyan);
+            --glow-soft: 0 0 10px rgba(0, 194, 255, 0.3);
+
+            /* NeuraSync H1 colors */
+            --NeuraSync-color-1: #00C2FF; /* Original primary blue */
+            --NeuraSync-shadow-1: 0 0 20px #00C2FF, 0 0 40px #00F6FF; 
+
+            --NeuraSync-color-2: #8AFFB0; /* Solution green */
+            --NeuraSync-shadow-2: 0 0 20px #8AFFB0, 0 0 40px rgba(138, 255, 176, 0.8);
+
+            --NeuraSync-color-3: #FF708C; /* Problem red */
+            --NeuraSync-shadow-3: 0 0 20px #FF708C, 0 0 40px rgba(255, 112, 140, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif; /* More modern body font */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            opacity: 0; /* Hidden on load */
+            transition: opacity 0.8s ease-out; /* Fade in on load */
+            cursor: none; /* Hide default cursor */
+        }
+        body.page-loaded {
+            opacity: 1;
+        }
+        body.page-exit {
+            opacity: 0;
+            transition: opacity 0.6s ease-in;
+        }
+        
+        /* --- NEW: Cursor Glow --- */
+        .cursor-glow {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            opacity: 0;
+            box-shadow: 0 0 15px var(--primary-color), 0 0 25px var(--primary-color);
+            transition: transform 0.1s ease-out, opacity 0.2s ease-out;
+        }
+        body:hover .cursor-glow { 
+            opacity: 0.5; 
+        }
+        .cursor-glow.pointer { 
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0.8;
+            background-color: rgba(0, 194, 255, 0.1);
+        }
+        /* Hide cursor on interactive elements */
+        a, button, .simulation, .info-block {
+            cursor: none;
+        }
+
+        /* --- Animated Background (Enhanced Aurora) --- */
+        .aurora-container {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            z-index: -2; /* Ensure it's behind everything */
+            background-color: var(--bg-color);
+        }
+        .aurora {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.18; /* Slightly more visible */
+            filter: blur(150px); /* More blur for ethereal look */
+            animation: move-aurora 50s ease-in-out infinite alternate;
+        }
+        .aurora-1 {
+            width: 900px; height: 700px;
+            background: radial-gradient(circle, var(--primary-color), transparent 70%);
+            top: -250px; left: -300px;
+        }
+        .aurora-2 {
+            width: 700px; height: 500px;
+            background: radial-gradient(circle, var(--accent-cyan), transparent 70%);
+            bottom: -200px; right: -250px;
+            animation-delay: 10s;
+            animation-duration: 45s;
+        }
+        .aurora-3 {
+            width: 600px; height: 800px;
+            background: radial-gradient(circle, var(--accent-solution), transparent 70%);
+            top: 50%; left: 10%;
+            transform: translate(-50%, -50%);
+            animation-delay: 20s;
+            animation-duration: 55s;
+        }
+        @keyframes move-aurora {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            33% { transform: translate(150px, 80px) rotate(90deg) scale(1.1); }
+            66% { transform: translate(-100px, -120px) rotate(270deg) scale(0.9); }
+            100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+        }
+
+        /* --- Global Sections --- */
+        main, section {
+            width: 90%;
+            max-width: 1300px; /* Wider content area */
+            margin: 0 auto;
+            padding: 100px 0; /* More vertical space */
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeIn 1s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
+            animation-delay: var(--delay, 0s); /* For staggered animations */
+            position: relative;
+            z-index: 1; /* Ensure content is above aurora */
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* --- Header --- */
+        header {
+            padding: 30px 0;
+            text-align: center;
+            border-bottom: 1px solid var(--panel-border);
+            backdrop-filter: blur(10px); /* Header blur */
+            background-color: rgba(1, 10, 19, 0.6); /* Slightly more opaque for header */
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-family: 'Orbitron', sans-serif; /* Futuristic font for title */
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 8px; /* Increased letter spacing */
+            text-transform: uppercase;
+            /* Use animation for color and shadow */
+            animation: NeuraSync-color-cycle 10s infinite alternate;
+        }
+
+        /* Keyframes for NeuraSync H1 color cycling */
+        @keyframes NeuraSync-color-cycle {
+            0% {
+                color: var(--NeuraSync-color-1);
+                text-shadow: var(--NeuraSync-shadow-1);
+            }
+            33% {
+                color: var(--NeuraSync-color-2);
+                text-shadow: var(--NeuraSync-shadow-2);
+            }
+            66% {
+                color: var(--NeuraSync-color-3);
+                text-shadow: var(--NeuraSync-shadow-3);
+            }
+            100% {
+                color: var(--NeuraSync-color-1);
+                text-shadow: var(--NeuraSync-shadow-1);
+            }
+        }
+        
+        .emotions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 25px;
+            font-size: 1.1rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        .emotions p {
+            transition: color 0.3s ease, transform 0.3s ease;
+            position: relative; /* For pop-up image positioning */
+            padding-bottom: 5px; /* Add space for the image below */
+        }
+        .emotions p:hover {
+            color: var(--primary-color);
+            transform: translateY(-3px);
+        }
+
+        .emotions .emotion-image {
+            position: absolute;
+            top: 30px; /* Position below the text */
+            left: 50%;
+            transform: translateX(-50%) scale(0); /* Start hidden and small */
+            width: 70px; /* Bigger size */
+            height: 70px; /* Bigger size */
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.15); /* Slightly more visible background */
+            padding: 8px; /* More padding */
+            box-shadow: 0 0 15px rgba(0, 194, 255, 0.7); /* Stronger glow */
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; /* More bouncy transition */
+            opacity: 0;
+            pointer-events: none; /* Make sure it doesn't block mouse events on the text */
+            z-index: 10; /* Ensure it's above other elements */
+        }
+        .emotions p:hover .emotion-image {
+            transform: translateX(-50%) scale(1); /* Pop up and grow */
+            opacity: 1;
+        }
+
+        /* --- Hero Section --- */
+        .hero-section {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            align-items: center;
+            gap: 60px; /* More space */
+            padding-top: 120px;
+            padding-bottom: 120px;
+        }
+
+        .watch-container {
+            grid-column: 2 / 3;
+            text-align: center;
+            position: relative;
+            perspective: 1000px;
+            z-index: 2;
+        }
+        .watch-container img {
+            max-width: 90%;
+            filter: drop-shadow(0 0 40px rgba(0, 246, 255, 0.3));
+            animation: float 5s ease-in-out infinite alternate;
+            transform-style: preserve-3d; /* Enable 3D transforms */
+        }
+        @keyframes float {
+            0% { transform: translateY(-15px) rotateX(0deg); }
+            100% { transform: translateY(15px) rotateX(2deg); }
+        }
+
+        .info-column {
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .info-block {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(15px); /* Stronger glassmorphism */
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .info-block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), var(--glow-soft);
+        }
+
+        .info-block img {
+            max-width: 80%;
+            height: auto;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            filter: grayscale(10%) brightness(1.1);
+            transition: transform 0.3s ease-out; /* Add transition for smooth zoom */
+        }
+        .info-block img:hover {
+            transform: scale(1.1); /* Zoom in 10% on hover */
+        }
+
+        .info-block p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-top: 15px;
+        }
+
+        .info-block .label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .label.problem { color: var(--accent-problem); text-shadow: 0 0 8px rgba(255,112,140,0.4); }
+        .label.solution { color: var(--accent-solution); text-shadow: 0 0 8px rgba(138,255,176,0.4); }
+
+        /* --- Peripherals Section --- */
+        .peripherals-section h2 {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            margin-bottom: 80px;
+            color: var(--primary-color);
+            text-shadow: var(--glow-strong);
+            animation: pulse-glow 3s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from { text-shadow: var(--glow-strong); }
+            to { text-shadow: 0 0 25px var(--primary-color), 0 0 50px var(--accent-cyan), 0 0 70px var(--primary-color); }
+        }
+
+        .simulation {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            margin: 0 auto;
+            border-radius: 50%;
+            cursor: none; /* Use custom cursor */
+        }
+
+        .simulation .component {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            text-align: center;
+            transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out, left 0.8s ease-in-out, top 0.8s ease-in-out;
+            transform-style: preserve-3d;
+            opacity: 0; /* Hidden initially, shown by JS */
+        }
+        .simulation .component:hover {
+            transform: scale(1.15) !important;
+            box-shadow: var(--glow-soft);
+        }
+        .simulation.paused .component {
+            transition: none !important;
+        }
+
+        .simulation .component img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            padding: 15px;
+            object-fit: contain;
+            filter: brightness(1.2);
+            box-shadow: var(--glow-soft);
+            transition: transform 0.3s ease;
+        }
+
+        .simulation .component:hover img {
+            transform: scale(1.05);
+        }
+
+        .simulation .component p {
+            margin-top: 12px;
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 5px rgba(0, 246, 255, 0.3);
+            transform: rotate(0deg) !important; 
+            animation: none !important; 
+        }
+
+        .simulation .centerImage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            transform: translate(-50%, -50%) rotate(0deg);
+            border-radius: 50%;
+            display: none;
+            background-image: url('wat.png'); /* Your original watch image */
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            filter: drop-shadow(0 0 50px var(--accent-cyan)) drop-shadow(0 0 20px var(--primary-color));
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+        .simulation.paused .centerImage {
+            transition: none !important;
+        }
+
+        /* --- NEW: Features Section --- */
+        .features-section h2 {
+          text-align: center;
+          font-family: 'Orbitron', sans-serif;
+          font-size: 3rem;
+          margin-bottom: 80px;
+          color: var(--primary-color);
+          text-shadow: var(--glow-strong);
+          animation: pulse-glow 3s infinite alternate;
+        }
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 30px;
+        }
+        .feature-block {
+          background-color: var(--panel-bg);
+          border: 1px solid var(--panel-border);
+          border-radius: 20px;
+          padding: 30px;
+          backdrop-filter: blur(15px);
+          box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          text-align: center;
+        }
+        .feature-block:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.4), var(--glow-soft);
+        }
+        .feature-block h3 {
+          font-family: 'Orbitron', sans-serif;
+          font-size: 1.4rem;
+          font-weight: 700;
+          color: var(--accent-solution);
+          margin-bottom: 15px;
+        }
+        .feature-block p {
+          font-size: 1rem;
+          color: var(--text-secondary);
+        }
+
+        /* --- Action Area (Call to Action) --- */
+        .action-area {
+            text-align: center;
+            padding: 80px 0;
+            background: linear-gradient(180deg, rgba(1, 10, 19, 0) 0%, rgba(1, 10, 19, 0.8) 100%);
+        }
+        .action-area .btn {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-cyan));
+            color: var(--bg-color);
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: none; /* Use custom cursor */
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 194, 255, 0.4);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .action-area .btn:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 246, 255, 0.6);
+        }
+
+        /* --- NEW: Notify Form --- */
+        .notify-form {
+          margin-top: 50px;
+          width: 100%;
+          max-width: 500px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .notify-form p {
+          font-size: 1.2rem;
+          color: var(--text-secondary);
+          margin-bottom: 20px;
+        }
+        .notify-form form {
+          display: flex;
+          gap: 10px;
+          background-color: var(--panel-bg);
+          border: 1px solid var(--panel-border);
+          border-radius: 50px;
+          padding: 8px;
+        }
+        .notify-form input[type="email"] {
+          flex-grow: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: var(--text-color);
+          font-size: 1.1rem;
+          padding: 0 20px;
+          font-family: 'Montserrat', sans-serif;
+          cursor: none; /* Use custom cursor */
+        }
+        .notify-form .btn-notify {
+          background: linear-gradient(90deg, var(--primary-color), var(--accent-cyan));
+          color: var(--bg-color);
+          border: none;
+          padding: 12px 25px;
+          font-size: 1.1rem;
+          font-weight: 700;
+          border-radius: 50px;
+          cursor: none; /* Use custom cursor */
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+        }
+        .notify-form .btn-notify:hover {
+          transform: scale(1.05);
+          box-shadow: 0 5px 20px rgba(0, 246, 255, 0.5);
+        }
+
+        /* --- NEW: Footer --- */
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid var(--panel-border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            width: 100%;
+            z-index: 1;
+            background-color: rgba(1, 10, 19, 0.6);
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 1024px) {
+            .hero-section {
+                grid-template-columns: 1fr;
+                gap: 50px;
+            }
+            .watch-container {
+                grid-row: 1 / 2;
+                margin-bottom: 20px;
+            }
+            .info-column {
+                grid-row: 2 / 3;
+            }
+            header h1 { font-size: 2.2rem; }
+            .emotions { font-size: 1rem; gap: 15px; }
+            .peripherals-section h2, .features-section h2 { font-size: 2.2rem; }
+            .action-area .btn { font-size: 1.4rem; padding: 15px 30px; }
+        }
+        @media (max-width: 768px) {
+            .simulation {
+                width: 450px;
+                height: 450px;
+            }
+            .simulation .component {
+                width: 90px;
+                height: 90px;
+            }
+            .simulation .centerImage {
+                width: 220px;
+                height: 220px;
+            }
+            .info-block { padding: 25px; }
+            .info-block p { font-size: 1rem; }
+            .info-block .label { font-size: 1.2rem; }
+        }
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.8rem; letter-spacing: 3px; }
+            .emotions { font-size: 0.85rem; gap: 10px; }
+            .hero-section { padding-top: 80px; padding-bottom: 80px; }
+            .peripherals-section h2, .features-section h2 { font-size: 1.8rem; margin-bottom: 50px; }
+            .simulation {
+                width: 300px;
+                height: 300px;
+            }
+            .simulation .component {
+                width: 70px;
+                height: 70px;
+            }
+            .simulation .component p { font-size: 0.8rem; margin-top: 8px; }
+            .simulation .centerImage {
+                width: 180px;
+                height: 180px;
+            }
+            .action-area .btn { font-size: 1.2rem; padding: 12px 25px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor-glow"></div> <div class="aurora-container">
+        <div class="aurora aurora-1"></div>
+        <div class="aurora aurora-2"></div>
+        <div class="aurora aurora-3"></div>
+    </div>
+
+    <header>
+        <h1>NeuraSync</h1>
+        <div class="emotions" aria-label="Emotions detected by NeuraSync">
+            <p>ANGER<img class="emotion-image" src="ang.png" alt="Anger icon"></p>
+            <p>FRUSTRATION<img class="emotion-image" src="fru.png" alt="Frustration icon"></p>
+            <p>ANXIETY<img class="emotion-image" src="anx.png" alt="Anxiety icon"></p>
+            <p>STRESS<img class="emotion-image" src="stress.png" alt="Stress icon"></p>
+        </div>
+    </header>
+
+    <main class="hero-section">
+        <div class="info-column"> 
+            <div class="info-block" aria-label="Problem description for anger">
+                <img src="ang.png" alt="Icon representing anger">
+                <p><span class="label problem">Problem:</span> Almost 75 million people in India face anxiety, frustration, anger, and stress in their daily lives, impacting their personal well-being and mental health.</p>
+            </div>
+            <div class="info-block" aria-label="Problem description for anxiety">
+                <img src="anx.png" alt="Icon representing anxiety">
+                <p><span class="label problem">Impact:</span> These prevalent negative emotions lead to decreased productivity, strained relationships, and significant health issues.</p>
+            </div>
+        </div>
+        
+        <div class="watch-container"> 
+            <img src="wat.png" alt="NeuraSync Smartwatch, a wearable emotional regulator">
+        </div>
+        
+        <div class="info-column"> 
+            <div class="info-block" aria-label="Solution with NeuraSync">
+                <img src="fru.png" alt="Icon representing frustration, now a problem NeuraSync can solve">
+                <p><span class="label solution">Solution:</span> NeuraSync, a wearable wrist watch, detects emotional states in real-time. It then helps regulate them using advanced biofeedback and sensory feedback mechanisms.</p>
+            </div>
+            <div class="info-block" aria-label="Key benefit of NeuraSync">
+                <img src="CALM.png" alt="Icon representing calmness">
+                <p><span class="label solution">Benefit:</span> Achieve inner calm and improve mental well-being with personalized guidance and immediate emotional support.</p>
+            </div>
+        </div>
+    </main>
+    
+    <section class="peripherals-section">
+        <h2>NeuraSync Peripherals: The Tech Behind the Calm</h2>
+        <div class="simulation" aria-label="Interactive diagram of NeuraSync components">
+            <div class="component" data-name="ESP32"><img src="ESP32.png" alt="ESP32 Microcontroller"><p>ESP32</p></div>
+            <div class="component" data-name="GSR"><img src="GSR.png" alt="GSR Sensor"><p>GSR</p></div>
+            <div class="component" data-name="GYRO"><img src="gyr and acce.png" alt="Gyroscope & Accelerometer"><p>GYRO</p></div>
+            <div class="component" data-name="SKIN SENSOR"><img src="skin.png" alt="Skin Temperature Sensor"><p>SKIN SENSOR</p></div>
+            <div class="component" data-name="MOTOR"><img src="motor.png" alt="Vibration Motor"><p>MOTOR</p></div>
+            <div class="component" data-name="PPG"><img src="ppg.png" alt="PPG Sensor for Heart Rate"><p>PPG</p></div>
+            <div class="component" data-name="SPEAKER"><img src="speaker.png" alt="Mini Speaker"><p>SPEAKER</p></div>
+            <div class="component" data-name="BATTERY"><img src="battery.png" alt="Battery Icon"><p>BATTERY</p></div> 
+            <div class="centerImage"></div>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <h2>Core Features</h2>
+        <div class="features-grid">
+            <div class="feature-block">
+                <h3>Real-Time Detection</h3>
+                <p>Uses advanced biosensors to understand your emotional state, moment by moment.</p>
+            </div>
+            <div class="feature-block">
+                <h3>Haptic Biofeedback</h3>
+                <p>Gentle vibrations and thermal cues guide your breathing to restore calm.</p>
+            </div>
+            <div class="feature-block">
+                <h3>Guided Exercises</h3>
+                <p>On-demand breathing and meditation exercises directly on your wrist.</p>
+            </div>
+            <div class="feature-block">
+                <h3>Long-Term Tracking</h3>
+                <p>Our app visualizes your emotional trends, helping you identify triggers.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="action-area" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;">
+        <div style="display: flex; justify-content: center; gap: 20px;">
+            <a href="tech.html" class="btn" aria-label="Learn the Technology">How It Works</a>
+            <a href="index.html" class="btn" aria-label="Launch NeuraSync Live Demo">Launch Live Demo</a>
+        </div>
+        
+        <div class="notify-form">
+            <p>Be the first to know when we launch.</p>
+            <form onsubmit="event.preventDefault(); alert('Thank you for your interest!');">
+                <input type="email" placeholder="Enter your email" required>
+                <button type="submit" class="btn-notify">Notify Me</button>
+            </form>
+        </div>
+    </section>
+    
+    <footer>
+        <p>&copy; 2025 NeuraSync. All rights reserved. This is a conceptual demo.</p>
+    </footer>
+
+    <script>
+        // --- Page Load Transition ---
+        window.addEventListener('load', () => {
+            document.body.classList.add('page-loaded');
+        });
+
+        // --- UPDATED Smooth Page Navigation (for ALL .btn links) ---
+        document.querySelectorAll('.action-area a.btn').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const destination = this.getAttribute('href');
+                document.body.classList.add('page-exit');
+
+                setTimeout(() => {
+                    window.location.href = destination;
+                }, 600);
+            });
+        });
+
+        // --- NEW: Cursor Glow Effect ---
+        const cursorGlow = document.querySelector('.cursor-glow');
+        if (cursorGlow) {
+            document.addEventListener('mousemove', (e) => {
+                cursorGlow.style.left = e.clientX + 'px';
+                cursorGlow.style.top = e.clientY + 'px';
+            });
+
+            // Make glow bigger on interactive elements
+            document.querySelectorAll('a, button, .simulation, .info-block, .feature-block, input[type="email"]').forEach(el => {
+                el.addEventListener('mouseenter', () => cursorGlow.classList.add('pointer'));
+                el.addEventListener('mouseleave', () => cursorGlow.classList.remove('pointer'));
+            });
+        }
+
+        // --- Utility for Scroll-based Parallax ---
+        function applyParallax() {
+            // REFINED: Now only targets non-hero elements
+            const parallaxElements = document.querySelectorAll('[data-parallax-speed]');
+            window.addEventListener('scroll', () => {
+                const scrollY = window.pageYOffset;
+                parallaxElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        const speed = parseFloat(el.getAttribute('data-parallax-speed'));
+                        const elementCenterY = rect.top + rect.height / 2;
+                        const viewportCenterY = window.innerHeight / 2;
+                        const offsetFromCenter = viewportCenterY - elementCenterY;
+
+                        const transformY = offsetFromCenter * (speed - 1) * 0.05;
+                        el.style.transform = `translateY(${transformY}px)`;
+                    }
+                });
+            });
+        }
+        applyParallax();
+
+        // --- Mouse-based Tilt Effect for Hero Elements ---
+        const heroSection = document.querySelector('.hero-section');
+        if (heroSection) {
+            heroSection.addEventListener('mousemove', (e) => {
+                const rect = heroSection.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const mouseX = e.clientX - centerX;
+                const mouseY = e.clientY - centerY;
+
+                heroSection.querySelectorAll('.info-block, .watch-container img').forEach(el => {
+                    const tiltX = (mouseY / rect.height) * 10;
+                    const tiltY = (mouseX / rect.width) * -10;
+                    el.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+                });
+            });
+
+            heroSection.addEventListener('mouseleave', () => {
+                heroSection.querySelectorAll('.info-block, .watch-container img').forEach(el => {
+                    el.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`; // Reset transform
+                });
+            });
+        }
+
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const simContainer = document.querySelector('.simulation');
+            if (!simContainer) return;
+
+            const simComponents = simContainer.querySelectorAll('.component');
+            const centerImage = simContainer.querySelector('.centerImage');
+            
+            let currentContainerRotation = 0;
+            const containerRotationSpeed = 0.05; // Degrees per frame for the overall container spin
+            let mergeLoopTimeoutId; // To store the ID of the merge loop timeout
+            let animationFrameId; // To store the ID of the requestAnimationFrame for spin
+            let animationRunning = true; // Control the animation state
+
+            // Helper to immediately stop all CSS transitions
+            function disableTransitions() {
+                simContainer.classList.add('paused');
+            }
+            // Helper to re-enable CSS transitions
+            function enableTransitions() {
+                simContainer.classList.remove('paused');
+            }
+
+            function positionSimComponents() {
+                const containerSize = simContainer.offsetWidth;
+                const componentSize = simComponents[0].offsetWidth;
+                const radius = (containerSize / 2) - (componentSize / 2) - 30;
+                const total = simComponents.length;
+
+                simComponents.forEach((comp, i) => {
+                    const angle = (i / total) * Math.PI * 2;
+                    const x = radius * Math.cos(angle) + containerSize / 2 - componentSize / 2;
+                    const y = radius * Math.sin(angle) + containerSize / 2 - componentSize / 2;
+                    
+                    comp.style.left = `${x}px`;
+                    comp.style.top = `${y}px`;
+                    comp.style.opacity = '1';
+                    comp.style.transform = `rotate(${-currentContainerRotation}deg)`; 
+                });
+                centerImage.style.display = 'none'; // Ensure watch is hidden when components are spread
+                centerImage.style.opacity = '0';
+                centerImage.style.transform = `translate(-50%, -50%) scale(0.8) rotate(0deg)`;
+            }
+
+            function animateContainerSpin() {
+                if (!animationRunning) {
+                    cancelAnimationFrame(animationFrameId); // Stop the animation loop
+                    return; 
+                }
+
+                currentContainerRotation = (currentContainerRotation + containerRotationSpeed) % 360;
+                simContainer.style.transform = `rotate(${currentContainerRotation}deg)`;
+
+                simComponents.forEach(comp => {
+                    comp.style.transform = `rotate(${-currentContainerRotation}deg)`;
+                });
+
+                animationFrameId = requestAnimationFrame(animateContainerSpin);
+            }
+
+            function startMergeLoop() {
+                if (!animationRunning) {
+                    return;
+                }
+
+                enableTransitions(); // Ensure transitions are on when animation starts
+
+                // 1. Components move to center and fade out
+                simComponents.forEach(comp => {
+                    comp.style.left = `${simContainer.offsetWidth / 2 - comp.offsetWidth / 2}px`;
+                    comp.style.top = `${simContainer.offsetHeight / 2 - comp.offsetHeight / 2}px`;
+                    comp.style.opacity = '0';
+                });
+
+                // 2. Center image appears and fades in, with a subtle scale/rotate
+                mergeLoopTimeoutId = setTimeout(() => {
+                    if (!animationRunning) { disableTransitions(); return; } 
+                    centerImage.style.display = 'block';
+                    centerImage.style.opacity = '1';
+                    centerImage.style.transform = `translate(-50%, -50%) scale(1.1) rotate(360deg)`;
+                }, 800);
+
+                // 3. Center image holds and then fades out
+                mergeLoopTimeoutId = setTimeout(() => {
+                    if (!animationRunning) { disableTransitions(); return; } 
+                    centerImage.style.opacity = '0';
+                    centerImage.style.transform = `translate(-50%, -50%) scale(0.8) rotate(0deg)`;
+                }, 2200);
+
+                // 4. Components return to position and become visible for next loop
+                mergeLoopTimeoutId = setTimeout(() => {
+                    if (!animationRunning) { disableTransitions(); return; } 
+                    positionSimComponents(); // Reposition components and hide watch
+                    simComponents.forEach(comp => comp.style.opacity = '1'); // Make them visible again
+                    
+                    // Call itself to loop the animation
+                    mergeLoopTimeoutId = setTimeout(startMergeLoop, 1000); // Start next merge after 1 second
+                }, 2700);
+            }
+
+            // --- REVERTED: Function to TOGGLE animation ---
+            function toggleAnimation() {
+                animationRunning = !animationRunning;
+                if (animationRunning) {
+                    enableTransitions(); // Re-enable transitions for smooth restart
+                    startMergeLoop(); // Resume the merge loop
+                    animateContainerSpin(); // Resume the continuous spin
+                } else {
+                    // Clear any pending timeouts for the merge loop
+                    clearTimeout(mergeLoopTimeoutId);
+                    cancelAnimationFrame(animationFrameId); // Stop the spin animation immediately
+                    disableTransitions(); // Immediately stop all CSS transitions for instant halt
+                }
+            }
+
+            // --- REVERTED: Add click listener to TOGGLE animation ---
+            simContainer.addEventListener('click', toggleAnimation);
+
+            // Initial positioning of components
+            positionSimComponents();
+
+            // Start the animations immediately
+            animateContainerSpin(); // Start the continuous spin
+            mergeLoopTimeoutId = setTimeout(startMergeLoop, 2000); // 2 second initial delay before first merge
+
+        });
+
+        // --- Fade-in Animation on Scroll (Staggered) for other sections ---
+        const sectionsObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    entry.target.style.setProperty('--delay', `${index * 0.2}s`);
+                    entry.target.style.animationPlayState = 'running';
+                    sectionsObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        // UPDATED: Now includes .features-section
+        document.querySelectorAll('main, section:not(.peripherals-section)').forEach(el => {
+            el.style.animationPlayState = 'paused';
+            sectionsObserver.observe(el);
+        });
+
+    </script>
+</body>
+</html>

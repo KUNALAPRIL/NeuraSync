@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>NeuraSync Live Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #02111B;
+            --text-color: #E0E0E0;
+            --primary-color: #00A9FF;
+            --accent-cyan: #00F6FF;
+            --panel-color: #1A1D23;
+            --border-color: #2c313a;
+
+            /* Emotion-specific colors */
+            --neutral-color: #E0E0E0;
+            --happy-color: #FFD700; /* Gold */
+            --anxious-color: #FFA500; /* Orange */
+            --stressed-color: #FF4500; /* Red-Orange */
+            --angry-color: #FF0000; /* Pure Red */
+
+            /* New: Calming-specific colors */
+            --calming-bg: #002233; /* Soothing blue */
+            --calming-text: #8AFFB0; /* Greenish for calm */
+            --glow-strong: 0 0 15px var(--primary-color), 0 0 30px var(--accent-cyan);
+            --glow-soft: 0 0 8px rgba(0, 194, 255, 0.3);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Montserrat', sans-serif; /* Consistent with landing page */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 100vh;
+            opacity: 0;
+            transition: opacity 0.8s ease-out, background-color 1s ease-in-out;
+        }
+        
+        body.page-loaded {
+            opacity: 1;
+        }
+        body.page-exit {
+            opacity: 0;
+            transition: opacity 0.6s ease-in;
+        }
+
+        body.calming-active {
+            background-color: var(--calming-bg); /* Calming background */
+        }
+
+        .main-container {
+            display: flex;
+            width: 95vw;
+            flex-grow: 1;
+            max-width: 1600px;
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            min-height: 0;
+        }
+
+        .panel {
+            flex: 1;
+            background-color: var(--panel-color);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+            box-sizing: border-box;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+        }
+
+        #face-panel {
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #face-image {
+            max-width: 80%;
+            max-height: 80%;
+            object-fit: contain;
+            animation: face-pulse 2s infinite alternate ease-in-out; 
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        #face-image.fade-out {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        @keyframes face-pulse {
+            0% { transform: scale(1); opacity: 0.95; }
+            100% { transform: scale(1.02); opacity: 1; }
+        }
+
+        #emotion-text {
+            position: absolute;
+            top: 40px;
+            font-family: 'Orbitron', sans-serif; /* Futuristic font */
+            font-size: 2.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--neutral-color);
+            opacity: 0.9;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: color 0.5s ease-in-out, text-shadow 0.5s ease-in-out;
+        }
+
+        #emotion-text.calming-glow {
+            color: var(--calming-text);
+            text-shadow: 0 0 15px var(--calming-text), 0 0 25px rgba(138,255,176,0.5);
+        }
+
+        #graph-panel {
+            justify-content: space-between;
+            gap: 15px; /* Spacing between chart and readouts */
+        }
+
+        .graph-container {
+            width: 100%;
+            flex-grow: 1;
+            position: relative;
+            min-height: 200px; /* Ensure chart has minimum height */
+        }
+
+        .sensor-readouts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Responsive grid */
+            gap: 15px;
+            width: 100%;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.05); /* Subtle separator */
+        }
+
+        .sensor {
+            background-color: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sensor-name {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sensor-value {
+            font-family: 'Orbitron', sans-serif; /* Futuristic font for values */
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-shadow: 0 0 5px rgba(0, 169, 255, 0.3);
+            transition: color 0.3s ease-in-out;
+        }
+        
+        .footer-buttons-container {
+            width: 100%;
+            padding: 20px 0;
+            background-color: var(--panel-color);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+            z-index: 10; /* Ensure it's above other elements */
+        }
+
+        .footer-buttons-container button,
+        .footer-buttons-container .btn-link {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-cyan));
+            color: #111;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem; /* Slightly smaller for better fit */
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0, 169, 255, 0.4);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            width: auto;
+            max-width: 400px;
+            text-decoration: none;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .footer-buttons-container button:hover:not(:disabled),
+        .footer-buttons-container .btn-link:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 246, 255, 0.5);
+        }
+        
+        .footer-buttons-container button:disabled {
+            background: #555;
+            color: #aaa;
+            cursor: not-allowed;
+            transform: scale(1);
+            box-shadow: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+            #emotion-text {
+                font-size: 2rem;
+                top: 20px;
+            }
+            .panel {
+                padding: 20px;
+            }
+            .sensor-readouts {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .footer-buttons-container {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 0;
+            }
+            .footer-buttons-container button,
+            .footer-buttons-container .btn-link {
+                width: 80%;
+                max-width: 300px;
+                font-size: 1.1rem;
+                padding: 12px 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #emotion-text {
+                font-size: 1.8rem;
+                top: 15px;
+            }
+            .sensor-readouts {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .sensor-value {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #emotion-text {
+                font-size: 1.5rem;
+                letter-spacing: 2px;
+                top: 10px;
+            }
+            .sensor-readouts {
+                grid-template-columns: 1fr; /* Single column on very small screens */
+            }
+            .sensor-name {
+                font-size: 0.75rem;
+            }
+            .sensor-value {
+                font-size: 1rem;
+            }
+        }
+
+        /* --- FEATURE 1: Breathing Guide Styles --- */
+        #breathing-guide {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 34, 51, 0.85); 
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s, visibility 0.5s;
+            pointer-events: none;
+        }
+
+        #breathing-guide.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .breathing-circle {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, var(--accent-cyan), var(--primary-color));
+            border-radius: 50%;
+            box-shadow: var(--glow-strong);
+            animation: breathe 8s ease-in-out infinite;
+        }
+
+        #breathing-text {
+            /* This overrides the main #emotion-text style */
+            position: static; 
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: white;
+            margin-top: 30px;
+            text-shadow: 0 0 10px white;
+            animation: breathe-text 8s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%   { transform: scale(0.8); opacity: 0.7; }
+            50%  { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.7; }
+        }
+
+        @keyframes breathe-text {
+            0%   { content: 'Breathe In...'; opacity: 0.7; }
+            45%  { content: 'Breathe In...'; opacity: 1; }
+            50%  { content: 'Hold'; opacity: 1; }
+            55%  { content: 'Breathe Out...'; opacity: 1; }
+            95%  { content: 'Breathe Out...'; opacity: 0.7; }
+            100% { content: 'Breathe In...'; opacity: 0.7; }
+        }
+
+        /* --- FEATURE 2: Event Log Styles --- */
+        .log-container {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100px;
+            flex-shrink: 0;
+        }
+
+        .log-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .log-box {
+            flex-grow: 1;
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse; /* New messages at top */
+            height: 150px; /* Fixed height */
+        }
+
+        .log-box p {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            animation: log-fade-in 0.3s ease-out;
+        }
+        .log-box p:first-child {
+            border-bottom: none;
+        }
+        .log-box p .log-time {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        .log-box p .log-warn {
+            color: var(--anxious-color);
+            font-weight: 600;
+        }
+        .log-box p .log-calm {
+            color: var(--calming-text);
+            font-weight: 600;
+        }
+
+        @keyframes log-fade-in {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- FEATURE 3: Pulsing Alert Styles --- */
+        .sensor.alert .sensor-value {
+            color: var(--angry-color) !important;
+            animation: pulse-red 1s infinite alternate;
+        }
+
+        @keyframes pulse-red {
+            from { 
+                text-shadow: 0 0 5px var(--angry-color);
+                transform: scale(1);
+            }
+            to { 
+                text-shadow: 0 0 15px var(--angry-color), 0 0 25px var(--angry-color);
+                transform: scale(1.05);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="panel" id="face-panel">
+            <h2 id="emotion-text">DETECTING...</h2>
+            <img id="face-image" src="neutral.png" alt="Human Face displaying current emotion"> 
+            
+            <div id="breathing-guide">
+                <div class="breathing-circle"></div>
+                <p id="breathing-text">Breathe In...</p>
+            </div>
+        </div>
+
+        <div class="panel" id="graph-panel">
+            <div class="graph-container">
+                <canvas id="sensorChart"></canvas>
+            </div>
+            <div class="sensor-readouts" id="sensor-display">
+                </div>
+            
+            <div class="log-container">
+                <div class="log-header">EVENT LOG</div>
+                <div class="log-box" id="event-log">
+                    </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer-buttons-container">
+        <button id="main-action-button">Activate NeuraSync</button>
+        <a href="home.html" class="btn-link">Home</a> 
+        <a href="tech.html" class="btn-link">Technology</a> 
+    </div>
+
+    <script>
+        // --- Page Load Transition ---
+        window.addEventListener('load', () => {
+            document.body.classList.add('page-loaded');
+        });
+
+        // --- Smooth Page Navigation ---
+        document.querySelectorAll('.btn-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault(); 
+                const destination = this.getAttribute('href');
+                document.body.classList.add('page-exit'); 
+                setTimeout(() => {
+                    window.location.href = destination; 
+                }, 600); 
+            });
+        });
+
+        // --- DOM ELEMENT REFERENCES ---
+        const faceImage = document.getElementById('face-image');
+        const emotionText = document.getElementById('emotion-text');
+        const mainActionButton = document.getElementById('main-action-button');
+        const sensorDisplay = document.getElementById('sensor-display');
+        const ctx = document.getElementById('sensorChart').getContext('2d');
+        const body = document.body;
+        const breathingGuide = document.getElementById('breathing-guide'); // FEATURE 1 Ref
+
+        // --- DATA AND STATE ---
+        const SENSORS = {
+            'Heart Rate': { color: '#FF6384', unit: ' BPM', lastValue: 0 },
+            'HRV': { color: '#36A2EB', unit: ' ms', lastValue: 0 },
+            'GSR': { color: '#FFCE56', unit: ' µS', lastValue: 0 },
+            'Skin Temp': { color: '#FFA500', unit: ' °C', lastValue: 0 },
+            'EMG': { color: '#9966FF', unit: ' µV', lastValue: 0 },
+            'Pulse Oximeter': { color: '#4BC0C0', unit: ' %', lastValue: 0 },
+            'Breathing': { color: '#F7464A', unit: ' /min', lastValue: 0 },
+            'Stress Score': { color: '#00A9FF', unit: '', lastValue: 0 }
+        };
+        
+        const EMOTION_DATA = {
+            'NEUTRAL': {
+                img: 'neutral.png', 
+                color: 'var(--neutral-color)',
+                ranges: { 'Heart Rate': [65, 75], 'HRV': [55, 75], 'GSR': [0.2, 0.8], 'Skin Temp': [33.5, 34], 'EMG': [1, 5], 'Pulse Oximeter': [98, 99], 'Breathing': [12, 16], 'Stress Score': [5, 15] }
+            },
+            'HAPPY': {
+                img: 'happy.png', 
+                color: 'var(--happy-color)',
+                ranges: { 'Heart Rate': [70, 85], 'HRV': [50, 70], 'GSR': [0.5, 1], 'Skin Temp': [33.5, 34.5], 'EMG': [2, 8], 'Pulse Oximeter': [98, 99], 'Breathing': [14, 18], 'Stress Score': [10, 25] }
+            },
+            'ANXIOUS': {
+                img: 'anxious.png', 
+                color: 'var(--anxious-color)',
+                ranges: { 'Heart Rate': [85, 110], 'HRV': [30, 45], 'GSR': [1.5, 3], 'Skin Temp': [33, 34], 'EMG': [10, 20], 'Pulse Oximeter': [96, 98], 'Breathing': [16, 22], 'Stress Score': [60, 80] }
+            },
+            'STRESSED': {
+                img: 'stress.png', 
+                color: 'var(--stressed-color)',
+                ranges: { 'Heart Rate': [95, 120], 'HRV': [20, 35], 'GSR': [2, 4], 'Skin Temp': [32, 33], 'EMG': [15, 25], 'Pulse Oximeter': [95, 97], 'Breathing': [18, 25], 'Stress Score': [75, 95] }
+            },
+            'ANGRY': {
+                img: 'angry.png', 
+                color: 'var(--angry-color)',
+                ranges: { 'Heart Rate': [100, 130], 'HRV': [15, 30], 'GSR': [3, 5], 'Skin Temp': [34, 35], 'EMG': [20, 30], 'Pulse Oximeter': [95, 97], 'Breathing': [20, 28], 'Stress Score': [85, 100] }
+            }
+        };
+
+        const EMOTIONS = Object.keys(EMOTION_DATA).filter(e => e !== 'NEUTRAL');
+        let simulationInterval;
+        let calmingInterval;
+        let simulationDurationTimer; 
+        let calmingDurationTimer;   
+
+        let isSimulationRunning = false;
+        let isCalmingActive = false;
+        let currentEmotion = 'NEUTRAL';
+        let previousEmotion = 'NEUTRAL';
+        let transitionStartTime = 0;
+        const EMOTION_TRANSITION_DURATION = 1000;
+
+        // --- CHART.JS SETUP ---
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: Object.keys(SENSORS).map(name => ({
+                    label: name, data: [], borderColor: SENSORS[name].color, backgroundColor: SENSORS[name].color + '33', borderWidth: 2, pointRadius: 0, tension: 0.4
+                }))
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: { duration: 200 },
+                scales: {
+                    x: { ticks: { display: false }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: { beginAtZero: false, ticks: { color: 'white' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                },
+                plugins: { legend: { position: 'bottom', labels: { color: 'white', boxWidth: 20, padding: 20 } } }
+            }
+        });
+        
+        // Dynamically create sensor readout elements
+        Object.keys(SENSORS).forEach(name => {
+            const sensorEl = document.createElement('div');
+            sensorEl.className = 'sensor';
+            sensorEl.innerHTML = `
+                <div class="sensor-name">${name}</div>
+                <div class="sensor-value" id="val-${name.replace(/ /g, '')}">${SENSORS[name].lastValue.toFixed(1)}${SENSORS[name].unit}</div>
+            `;
+            sensorDisplay.appendChild(sensorEl);
+        });
+
+        // --- CORE FUNCTIONS ---
+
+        // --- FEATURE 2: New Log Function ---
+        function addLog(message, type = '') {
+            const logBox = document.getElementById('event-log');
+            if (!logBox) return; // Safety check
+            const now = new Date();
+            const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            let typeClass = '';
+            if (type === 'warn') typeClass = 'log-warn';
+            if (type === 'calm') typeClass = 'log-calm';
+
+            const newLogEntry = document.createElement('p');
+            newLogEntry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${typeClass}">${message}</span>`;
+            
+            logBox.prepend(newLogEntry); // Adds to the top
+
+            if (logBox.children.length > 20) {
+                logBox.removeChild(logBox.lastChild);
+            }
+        }
+
+        function easeInOutQuad(t) {
+            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        }
+        
+        function getRandomValue(min, max, volatility = 1) { 
+            return (Math.random() * (max - min) + min) + (Math.random() - 0.5) * volatility; 
+        }
+
+        // UPDATED: Calls addLog
+        function updateFaceAndText(emotion) {
+            if (emotion === currentEmotion) return; 
+            
+            // Log high-stress events
+            if (emotion === 'STRESSED' || emotion === 'ANXIOUS' || emotion === 'ANGRY') {
+                addLog(`High Emotion Detected: ${emotion}`, 'warn');
+            }
+
+            faceImage.classList.add('fade-out');
+            setTimeout(() => {
+                faceImage.src = EMOTION_DATA[emotion].img;
+                emotionText.textContent = emotion;
+                emotionText.style.color = EMOTION_DATA[emotion].color;
+                
+                if (emotion === 'CALMING PROTOCOL') {
+                    emotionText.classList.add('calming-glow');
+                } else {
+                    emotionText.classList.remove('calming-glow');
+                }
+                faceImage.classList.remove('fade-out');
+            }, EMOTION_TRANSITION_DURATION * 0.3); 
+            
+            previousEmotion = currentEmotion; // Store the state we are transitioning *from*
+            currentEmotion = emotion;
+            transitionStartTime = Date.now(); // Start the transition timer
+        }
+
+        // UPDATED: Adds pulsing alert logic (Feature 3)
+        function updateSensorData(targetEmotionData, transitionProgress = 1) {
+            const now = new Date();
+            const timeLabel = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            chart.data.labels.push(timeLabel);
+            if (chart.data.labels.length > 30) { 
+                chart.data.labels.shift();
+                chart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+
+            chart.data.datasets.forEach(dataset => {
+                const sensorName = dataset.label;
+                if (!targetEmotionData.ranges[sensorName]) return; // Safety check
+                
+                const [targetMin, targetMax] = targetEmotionData.ranges[sensorName];
+                
+                let value;
+                if (transitionProgress < 1) { 
+                    const startValue = SENSORS[sensorName].lastValue;
+                    const prevRanges = EMOTION_DATA[previousEmotion]?.ranges[sensorName] || targetEmotionData.ranges[sensorName];
+                    
+                    const interpolatedValue = startValue + 
+                        (getRandomValue(targetMin, targetMax) - startValue) * easeInOutQuad(transitionProgress);
+                    value = interpolatedValue;
+                } else { 
+                    value = getRandomValue(targetMin, targetMax);
+                }
+
+                if (sensorName === 'HRV') {
+                    const hrDataset = chart.data.datasets.find(ds => ds.label === 'Heart Rate');
+                    if (hrDataset && hrDataset.data.length > 0) {
+                        const currentHR = hrDataset.data[hrDataset.data.length - 1];
+                        const hrInfluence = (currentHR - 70) * -0.3; 
+                        value = Math.max(targetMin, Math.min(targetMax, value + hrInfluence));
+                    }
+                }
+
+                dataset.data.push(value);
+                SENSORS[sensorName].lastValue = value;
+                const valueEl = document.getElementById(`val-${sensorName.replace(/ /g, '')}`);
+                if(valueEl) { // Safety check
+                    valueEl.textContent = value.toFixed(1) + SENSORS[sensorName].unit;
+                
+                    // --- FEATURE 3: Pulsing Alert Logic ---
+                    const sensorEl = valueEl.parentElement; // Get the parent .sensor div
+                    if ((sensorName === 'Stress Score' && value > 80) || (sensorName === 'Heart Rate' && value > 110)) {
+                        sensorEl.classList.add('alert');
+                    } else {
+                        sensorEl.classList.remove('alert');
+                    }
+                    // --- End Feature 3 Logic ---
+                }
+
+            });
+            chart.update('none'); 
+        }
+
+        // UPDATED: Shows/hides breathing guide (Feature 1) and logs (Feature 2)
+        function resetSimulationState() {
+            clearInterval(simulationInterval);
+            clearTimeout(simulationDurationTimer);
+            clearInterval(calmingInterval);
+            clearTimeout(calmingDurationTimer);
+            
+            if (isCalmingActive) { // Only log if we were just calming
+                addLog('State returned to NEUTRAL.', 'calm');
+            }
+            
+            isSimulationRunning = false;
+            isCalmingActive = false;
+            body.classList.remove('calming-active');
+            breathingGuide.classList.remove('show'); // Hide breathing guide
+            updateFaceAndText('NEUTRAL');
+            mainActionButton.textContent = "Restart Simulation";
+            mainActionButton.disabled = false;
+        }
+
+        function startSimulation() {
+            if (isSimulationRunning) return;
+
+            resetSimulationState(); 
+            currentEmotion = 'DETECTING...'; 
+            emotionText.textContent = 'DETECTING...';
+            emotionText.style.color = EMOTION_DATA['NEUTRAL'].color; 
+            faceImage.src = 'neutral.png'; 
+            addLog('NeuraSync Simulation Activated.');
+
+            mainActionButton.textContent = "Activate Calming";
+            mainActionButton.disabled = false; 
+
+            isSimulationRunning = true;
+            let timeElapsed = 0;
+            const simulationLength = 60000; 
+            const updateInterval = 1500; 
+
+            simulationInterval = setInterval(() => {
+                timeElapsed += updateInterval;
+                if (timeElapsed >= simulationLength) {
+                    clearInterval(simulationInterval);
+                    startCalmingProtocol(); 
+                    return;
+                }
+                previousEmotion = currentEmotion; 
+                const randomEmotion = EMOTIONS[Math.floor(Math.random() * EMOTIONS.length)];
+                updateFaceAndText(randomEmotion);
+                updateSensorData(EMOTION_DATA[randomEmotion]);
+
+            }, updateInterval);
+
+            simulationDurationTimer = setTimeout(() => {
+                clearInterval(simulationInterval);
+                startCalmingProtocol();
+            }, simulationLength);
+        }
+
+        // UPDATED: Shows breathing guide (Feature 1) and logs (Feature 2)
+        function startCalmingProtocol(manual = false) {
+            if (isCalmingActive) return;
+
+            addLog('Calming Protocol Initiated.', 'calm');
+            breathingGuide.classList.add('show'); // Show breathing guide
+
+            clearInterval(simulationInterval);
+            clearTimeout(simulationDurationTimer); 
+            isSimulationRunning = false;
+
+            isCalmingActive = true;
+            body.classList.add('calming-active');
+            updateFaceAndText('CALMING PROTOCOL'); 
+            mainActionButton.textContent = "CALMING...";
+            mainActionButton.disabled = true; 
+
+            const calmData = EMOTION_DATA['NEUTRAL'];
+            let progress = 0;
+            const duration = 15000; // 15 seconds
+            const steps = 150; 
+            const stepDuration = duration / steps;
+            
+            previousEmotion = currentEmotion; // Store the state we are calming *from*
+
+            calmingInterval = setInterval(() => {
+                progress += 1 / steps;
+                if (progress >= 1) {
+                    clearInterval(calmingInterval);
+                    // Let the timeout handle the reset
+                    return;
+                }
+                updateSensorData(calmData, progress); // Transition to neutral data
+            }, stepDuration);
+
+            calmingDurationTimer = setTimeout(() => {
+                clearInterval(calmingInterval);
+                isCalmingActive = false;
+                body.classList.remove('calming-active');
+                breathingGuide.classList.remove('show'); // Hide breathing guide
+                addLog('State returned to NEUTRAL.', 'calm');
+                updateFaceAndText('NEUTRAL'); 
+                mainActionButton.textContent = "Restart Simulation";
+                mainActionButton.disabled = false;
+                currentEmotion = 'NEUTRAL'; 
+            }, duration);
+        }
+
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            // Pre-load images
+            Object.values(EMOTION_DATA).forEach(data => {
+                const img = new Image();
+                img.src = data.img;
+            });
+
+            // Set initial sensor values to neutral
+            Object.keys(SENSORS).forEach(name => {
+                const [min, max] = EMOTION_DATA['NEUTRAL'].ranges[name];
+                SENSORS[name].lastValue = getRandomValue(min, max);
+            });
+
+            updateFaceAndText('NEUTRAL'); 
+            updateSensorData(EMOTION_DATA['NEUTRAL']); 
+            mainActionButton.textContent = "Activate NeuraSync";
+            mainActionButton.disabled = false;
+            addLog('System Initialized. Status: NEUTRAL.');
+            
+            mainActionButton.addEventListener('click', () => {
+                if (!isSimulationRunning && !isCalmingActive && mainActionButton.textContent === "Activate NeuraSync") {
+                    startSimulation(); 
+                } else if (isSimulationRunning && mainActionButton.textContent === "Activate Calming") {
+                    startCalmingProtocol(true); 
+                } else if (mainActionButton.textContent === "Restart Simulation") { 
+                    location.reload(); 
+                }
+            });
+        };
+    </script>
+</body>
+</html>

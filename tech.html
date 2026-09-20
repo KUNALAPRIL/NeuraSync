@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuraSync - Watch Demo</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #010A13;
+            --panel-bg: rgba(18, 29, 44, 0.75); /* Frosted glass effect */
+            --panel-border: rgba(40, 60, 80, 0.6);
+            --text-color: #E6EBF0;
+            --text-secondary: #A0B0C0;
+            --primary-color: #00C2FF;
+            --accent-cyan: #00F6FF;
+            --accent-problem: #FF708C; /* Used for second hand */
+            --accent-solution: #8AFFB0;
+            --glow-strong: 0 0 20px var(--primary-color), 0 0 40px var(--accent-cyan);
+            --glow-soft: 0 0 10px rgba(0, 194, 255, 0.3);
+
+            /* Emotion Colors */
+            --neutral-color: #E0E0E0;
+            --happy-color: #FFD700;
+            --anxious-color: #FFA500;
+            --stressed-color: #FF4500;
+            --angry-color: #FF0000;
+            --calming-bg: #002233;
+            --calming-text: #8AFFB0;
+            
+            /* Sleep Colors */
+            --sleep-deep: #3D52A0;
+            --sleep-light: #7091E6;
+            --sleep-rem: #ADBBDA;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* --- Page transition styles --- */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; /* No scroll on this page */
+            line-height: 1.6;
+            height: 100vh;
+            position: relative;
+            opacity: 0; /* Hidden on load */
+            transition: opacity 0.8s ease-out; /* Fade in on load */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center; 
+        }
+        body.page-loaded {
+            opacity: 1;
+        }
+        body.page-exit {
+            opacity: 0;
+            transition: opacity 0.6s ease-in;
+        }
+        body.calming-active {
+            background-color: var(--calming-bg); /* Calming background */
+        }
+        
+        /* --- Aurora Background --- */
+        .aurora-container {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            z-index: -2;
+            background-color: var(--bg-color);
+        }
+        .aurora {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.18;
+            filter: blur(150px);
+            animation: move-aurora 50s ease-in-out infinite alternate;
+        }
+        .aurora-1 {
+            width: 900px; height: 700px;
+            background: radial-gradient(circle, var(--primary-color), transparent 70%);
+            top: -250px; left: -300px;
+        }
+        .aurora-2 {
+            width: 700px; height: 500px;
+            background: radial-gradient(circle, var(--accent-cyan), transparent 70%);
+            bottom: -200px; right: -250px;
+            animation-delay: 10s;
+        }
+        @keyframes move-aurora {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            100% { transform: translate(150px, -120px) rotate(360deg) scale(1.2); }
+        }
+
+        /* --- Smartwatch Styles --- */
+        .watch-container {
+            position: relative;
+            width: 400px; /* Frame size */
+            height: 400px; /* Frame size */
+            display: flex;
+            justify-content: center;
+            align-items: center; 
+            flex-shrink: 0; /* Prevent watch from shrinking */
+            
+            background: radial-gradient(circle at 50% 50%, #555, #1a1a1a);
+            border-radius: 50%;
+            border: 18px solid #1c1c1c;
+            box-shadow: 
+                0 30px 50px rgba(0,0,0,0.7),
+                inset 0 0 10px rgba(0,0,0,0.5),
+                inset 0 0 3px 2px rgba(255,255,255,0.05);
+        }
+
+        /* The crown on the side */
+        .watch-container::after {
+            content: '';
+            position: absolute;
+            right: -32px; /* Position it outside the 18px border */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 40px;
+            background: linear-gradient(90deg, #444, #222);
+            border: 2px solid #111;
+            border-left: none;
+            border-radius: 0 6px 6px 0;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.4);
+        }
+
+        .watch-screen {
+            width: 320px; 
+            height: 320px;
+            border-radius: 50%;
+            background-color: #000; /* The black screen */
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5) inset;
+        }
+        
+        /* --- App Screen Styles --- */
+        .app-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            padding: 25px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center; 
+            text-align: center;
+        }
+        .app-screen.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* --- App Launcher (Navigation) --- */
+        .app-launcher {
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            padding: 30px 0 20px 0; /* Adjusted padding */
+        }
+        .app-icon {
+            /* font-size: 0.7rem; <-- Removed */
+            width: 50px; /* Slightly larger */
+            height: 50px; /* Slightly larger */
+            border-radius: 50%;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            display: flex;
+            justify-content: center;
+            align-items: center; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+        /* NEW: SVG Icon styles */
+        .app-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+            transition: fill 0.2s ease;
+        }
+        .app-icon:hover {
+            transform: scale(1.1);
+            box-shadow: var(--glow-soft);
+            color: var(--text-color);
+        }
+        .app-icon.active {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: var(--glow-soft);
+        }
+
+        /* --- Screen 1: Clock (ANALOG) --- */
+        .clock-face {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        /* NEW: Clock tick marks */
+        .clock-marks-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 1;
+        }
+        .clock-mark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0 0;
+            background-color: var(--text-secondary);
+        }
+        .hour-mark {
+            width: 140px; /* (radius - mark-length) */
+            height: 4px;
+            transform-origin: 0 50%;
+        }
+        .hour-mark::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 4px;
+            background-color: var(--text-color);
+            border-radius: 2px;
+        }
+        .minute-mark {
+            width: 144px; /* (radius - mark-length) */
+            height: 1px;
+            transform-origin: 0 50%;
+        }
+        .minute-mark::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 1px;
+            background-color: var(--text-secondary);
+        }
+        
+        .clock-hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 5px 5px 0 0;
+            z-index: 10;
+        }
+        #clock-hand-hour {
+            width: 8px;
+            height: 80px; /* Adjusted length */
+            background: var(--text-color);
+            transform: translateX(-50%) rotate(0deg);
+        }
+        #clock-hand-minute {
+            width: 6px;
+            height: 110px; /* Adjusted length */
+            background: var(--text-color);
+            transform: translateX(-50%) rotate(0deg);
+        }
+        #clock-hand-second {
+            width: 2px;
+            height: 120px; /* Adjusted length */
+            background: var(--accent-problem);
+            transform: translateX(-50%) rotate(0deg);
+        }
+        .clock-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: var(--accent-problem);
+            border: 2px solid #000;
+            border-radius: 50%;
+            z-index: 11;
+        }
+        #clock-date {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        /* NEW: Clock Complications */
+        .complication {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .complication-hr {
+            top: 60px;
+            color: var(--accent-problem);
+        }
+        .complication-stress {
+            bottom: 70px;
+            color: var(--primary-color);
+        }
+        .complication span {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* --- Screen 2: Emotion --- */
+        #watch-emotion-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--neutral-color);
+            transition: color 0.5s ease-in-out;
+        }
+        #watch-stress-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-top: 15px;
+            color: var(--primary-color);
+        }
+        #watch-stress-score-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        #watch-stress-score.alert {
+            color: var(--angry-color) !important;
+            animation: pulse-red 1s infinite alternate;
+        }
+
+        /* --- Screen 3: Vitals --- */
+        .screen-title { /* Reusable title */
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            position: absolute;
+            top: 30px;
+        }
+        #vitals-list {
+            width: 100%;
+            margin-top: 30px;
+            overflow-y: auto;
+            height: calc(100% - 30px); /* Full height minus title */
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) var(--panel-bg);
+        }
+        #vitals-list::-webkit-scrollbar { width: 6px; }
+        #vitals-list::-webkit-scrollbar-track { background: var(--panel-bg); border-radius: 3px; }
+        #vitals-list::-webkit-scrollbar-thumb { background-color: var(--primary-color); border-radius: 3px; }
+        .vital-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--panel-border);
+        }
+        .vital-item span:first-child { color: var(--text-secondary); }
+        .vital-item span:last-child { font-weight: 600; color: var(--text-color); }
+
+        /* --- Screen 4: Breathing --- */
+        #screen-breathing {
+            background-color: var(--calming-bg);
+        }
+        .watch-breathing-circle {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, var(--accent-cyan), var(--primary-color));
+            border-radius: 50%;
+            animation: breathe 8s ease-in-out infinite;
+        }
+        #watch-breathing-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: white;
+            margin-top: 20px;
+            animation: breathe-text 8s ease-in-out infinite;
+        }
+
+        /* --- Screen 5: Sleep --- */
+        .sleep-summary {
+            width: 100%;
+        }
+        .sleep-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--accent-solution);
+            line-height: 1;
+        }
+        .sleep-score-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        .sleep-stat {
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 5px 0;
+        }
+        .sleep-stat span:first-child { color: var(--text-secondary); }
+        .sleep-stat span:last-child { font-weight: 600; }
+        
+        .sleep-stages {
+            width: 100%;
+            margin-top: 15px;
+        }
+        .stage-bar {
+            height: 10px;
+            display: flex;
+            width: 100%;
+            border-radius: 5px;
+            overflow: hidden;
+            background: var(--panel-bg);
+        }
+        .stage-segment { height: 10px; }
+        .stage-deep { background: var(--sleep-deep); width: 20%; } /* Mockup % */
+        .stage-light { background: var(--sleep-light); width: 55%; } /* Mockup % */
+        .stage-rem { background: var(--sleep-rem); width: 25%; } /* Mockup % */
+        
+        .stage-legend {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            font-size: 0.7rem;
+            margin-top: 8px;
+        }
+        .legend-item { display: flex; align-items: center; } 
+        .legend-color { width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        
+        /* --- Screen 6: History --- */
+        .history-chart {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end; 
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 5px;
+        }
+        .chart-bar {
+            width: 15px;
+            background: var(--primary-color);
+            border-radius: 3px 3px 0 0;
+            animation: grow-bar 1s ease-out;
+            transition: height 0.5s ease-out, background-color 0.5s ease; /* Added transition */
+        }
+        .chart-bar.high {
+            background: var(--anxious-color);
+        }
+        .chart-bar.v-high {
+            background: var(--stressed-color);
+        }
+        .chart-labels {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        @keyframes grow-bar {
+            from { height: 0; }
+        }
+
+        /* --- REFINED: Notification Pop-up --- */
+        .watch-notification {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--panel-border);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-100%); /* Start off-screen top */
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* Bounce-out ease */
+        }
+        .watch-notification.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0); /* Slide in */
+        }
+        .notification-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 10px;
+            animation: pulse-icon 1s infinite alternate ease-in-out;
+        }
+        .watch-notification h4 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-problem);
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--accent-problem);
+        }
+        .watch-notification p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin: 10px 0 20px;
+        }
+        .watch-notification p b {
+            font-size: 1.5rem;
+            color: var(--text-color);
+        }
+        .notification-buttons {
+            display: flex;
+            gap: 10px;
+            width: 90%;
+        }
+        .btn-alert, .btn-alert-dismiss {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem; /* Smaller text */
+            padding: 12px 15px; /* Adjusted padding */
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 50%; /* Side-by-side */
+            margin-bottom: 0;
+        }
+        .btn-alert {
+            background: var(--accent-solution);
+            color: #000;
+        }
+        .btn-alert:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--accent-solution);
+        }
+        .btn-alert-dismiss {
+            background: var(--panel-border);
+            color: var(--text-secondary);
+        }
+        .btn-alert-dismiss:hover {
+            background: var(--text-secondary);
+            color: #000;
+        }
+        
+        @keyframes pulse-icon {
+            from { opacity: 0.7; transform: scale(1); }
+            to { opacity: 1; transform: scale(1.1); }
+        }
+        /* --- End Notification --- */
+
+
+        @keyframes breathe {
+            0%   { transform: scale(0.8); opacity: 0.7; }
+            50%  { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.7; }
+        }
+        @keyframes breathe-text {
+            0%   { content: 'Breathe In'; opacity: 0.7; }
+            45%  { content: 'Breathe In'; opacity: 1; }
+            50%  { content: 'Hold'; opacity: 1; }
+            55%  { content: 'Breathe Out'; opacity: 1; }
+            95%  { content: 'Breathe Out'; opacity: 0.7; }
+            100% { content: 'Breathe In'; opacity: 0.7; }
+        }
+        
+        @keyframes pulse-red {
+            from { text-shadow: 0 0 5px var(--angry-color); transform: scale(1); }
+            to { text-shadow: 0 0 15px var(--angry-color), 0 0 25px var(--angry-color); transform: scale(1.05); }
+        }
+        
+        /* --- Page Navigation Buttons --- */
+        .page-nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px 0 30px 0; /* Adjusted padding */
+            z-index: 1;
+            width: 100%;
+        }
+        .btn {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-cyan));
+            color: var(--bg-color);
+            border: none;
+            padding: 12px 28px; /* Slightly smaller */
+            font-size: 1.1rem; /* Slightly smaller */
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 194, 255, 0.4);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 246, 255, 0.6);
+        }
+        .pulse-bg{
+    position:absolute;
+    width:380px;
+    height:380px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(0,194,255,0.25), transparent 70%);
+    z-index:0;
+    animation:pulseGlow 3s infinite ease-in-out;
+}
+
+@keyframes pulseGlow{
+    0%{transform:scale(0.9); opacity:0.5;}
+    50%{transform:scale(1.1); opacity:1;}
+    100%{transform:scale(0.9); opacity:0.5;}
+}
+    </style>
+</head>
+<body> 
+    
+    <div class="aurora-container">
+        <div class="aurora aurora-1"></div>
+        <div class="aurora aurora-2"></div>
+    </div>
+
+    <div class="watch-container">
+        <div class="pulse-bg"></div>
+        <div class="watch-screen">
+
+            <div class="app-screen active" id="screen-clock">
+                <div class="clock-marks-container" id="clock-marks"></div>
+                
+                <div class="clock-face">
+                    <div class="clock-hand" id="clock-hand-hour"></div>
+                    <div class="clock-hand" id="clock-hand-minute"></div>
+                    <div class="clock-hand" id="clock-hand-second"></div>
+                    <div class="clock-center"></div>
+                </div>
+                
+                <div class="complication complication-hr">
+                    ❤️ <span id="clock-hr-value">--</span>
+                </div>
+                <div class="complication complication-stress">
+                    ⚡ <span id="clock-stress-value">--</span>
+                </div>
+
+                <div id="clock-date">MON, 03 NOV</div>
+            </div>
+
+            <div class="app-screen" id="screen-emotion">
+                <h3 id="watch-emotion-text">NEUTRAL</h3>
+                <div id="watch-stress-score">12</div>
+                <p id="watch-stress-score-label">Stress Score</p>
+            </div>
+
+            <div class="app-screen" id="screen-vitals">
+                <h3 class="screen-title">Vitals</h3>
+                <div id="vitals-list">
+                    </div>
+            </div>
+
+            <div class="app-screen" id="screen-breathing">
+                <div class="watch-breathing-circle"></div>
+                <p id="watch-breathing-text">Breathe In</p>
+            </div>
+            
+            <div class="app-screen" id="screen-sleep">
+                <h3 class="screen-title">Sleep</h3>
+                <div class="sleep-summary">
+                    <div class="sleep-score" id="sleep-score-value">86</div>
+                    <div class="sleep-score-label">Sleep Score</div>
+                    <div class="sleep-stat">
+                        <span>Time Asleep</span>
+                        <span id="sleep-time-value">7h 42m</span>
+                    </div>
+                    <div class="sleep-stat">
+                        <span>Awake</span>
+                        <span id="sleep-awake-value">18m</span>
+                    </div>
+                    <div class="sleep-stages">
+                        <div class="stage-bar">
+                            <div class="stage-segment stage-deep"></div>
+                            <div class="stage-segment stage-light"></div>
+                            <div class="stage-segment stage-rem"></div>
+                        </div>
+                        <div class="stage-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background:var(--sleep-deep)"></span>Deep
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background:var(--sleep-light)"></span>Light
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background:var(--sleep-rem)"></span>REM
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-screen" id="screen-history">
+                <h3 class="screen-title">Stress - 7 Days</h3>
+                <div class="history-chart">
+                    <div class="chart-bar" id="bar-1" style="height: 30%"></div>
+                    <div class="chart-bar" id="bar-2" style="height: 50%"></div>
+                    <div class="chart-bar high" id="bar-3" style="height: 75%"></div>
+                    <div class="chart-bar" id="bar-4" style="height: 40%"></div>
+                    <div class="chart-bar high" id="bar-5" style="height: 60%"></div>
+                    <div class="chart-bar v-high" id="bar-6" style="height: 85%"></div>
+                    <div class="chart-bar" id="bar-7" style="height: 25%"></div>
+                </div>
+                <div class="chart-labels">
+                    <span>M</span>
+                    <span>T</span>
+                    <span>W</span>
+                    <span>T</span>
+                    <span>F</span>
+                    <span>S</span>
+                    <span>S</span>
+                </div>
+            </div>
+
+            <div class="watch-notification" id="stress-notification">
+                <svg class="notification-icon" viewBox="0 0 24 24">
+                    <path fill="var(--accent-problem)" d="M12 2L1 21h22L12 2zm0 4.6L19.5 20H4.5L12 6.6zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
+                </svg>
+                <h4>High Stress Detected!</h4>
+                <p>Your stress score is <b id="alert-score-value">--</b></p>
+                <div class="notification-buttons">
+                    <button class="btn-alert" id="alert-calm-btn">Calm Down</button>
+                    <button class="btn-alert-dismiss" id="alert-dismiss-btn">Dismiss</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <nav class="app-launcher">
+        <div class="app-icon active" data-target="screen-clock" title="Clock">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z"></path></svg>
+        </div>
+        <div class="app-icon" data-target="screen-emotion" title="Zen">
+            <svg viewBox="0 0 24 24"><path d="M12 4C9.28 4 7.02 5.46 6 7.5c-1.02 2.04-1.45 4.54-1 7 .45 2.47 1.91 4.47 3.96 5.51 1.02.52 2.11.8 3.23.83 1.13.03 2.22-.2 3.24-.73 2.05-1.07 3.5-3.09 3.95-5.54 .46-2.47 0-4.96-1-7.01C16.98 5.46 14.72 4 12 4zm0 1.5c2.3 0 4.22 1.25 5.16 3.09 .83 1.62 1.18 3.62.8 5.58-.38 1.95-1.5 3.6-3.21 4.48-.86.44-1.78.65-2.75.62s-1.9-.4-2.75-.95c-1.71-.9-2.82-2.55-3.2-4.5S6.82 9.2 7.65 7.57C8.59 5.75 10.51 4.5 13 4.5M12 6c-2.84 0-5.13 2.01-5.83 4.6C5.58 12.89 6.2 15.28 7.5 17c1.3 1.72 3.32 2.75 5.5 2.75s4.2-1.03 5.5-2.75c1.3-1.72 1.92-4.11 1.33-6.4C19.13 8.01 16.84 6 14 6z"></path></svg>
+        </div>
+        <div class="app-icon" data-target="screen-vitals" title="Vitals">
+            <svg viewBox="0 0 24 24"><path d="M12 2.042c-5.053.0-9.148 4.095-9.148 9.148 0 4.272 2.95 7.89 6.907 8.877L12 22.357l2.24-2.29c3.957-.987 6.907-4.605 6.907-8.877 0-5.053-4.095-9.148-9.148-9.148zM15.21 15.158l-2.062-3.13L11.02 15.158H9.38l3.13-4.73 2.062 3.13L16.62 10.43H18.25z"></path></svg>
+        </div>
+        <div class="app-icon" data-target="screen-sleep" title="Sleep">
+            <svg viewBox="0 0 24 24"><path d="M11.5 2C6.81 2 3 5.81 3 10.5S6.81 19 11.5 19c.92 0 1.83-.11 2.69-.33.39-.1.74-.33.97-.66.5-.7.15-1.7-.64-1.95-.53-.17-1.1-.26-1.7-.26-2.9 0-5.25-2.35-5.25-5.25S8.6 6 11.5 6c.71 0 1.39.14 2 .4.82.35 1.77-.14 1.97-.97.23-.92-.4-1.76-1.32-1.89C13.29 2.21 12.4 2 11.5 2z"></path></svg>
+        </div>
+        <div class="app-icon" data-target="screen-history" title="History">
+            <svg viewBox="0 0 24 24"><path d="M5 20h14v2H5zM6 17h2v-7H6v7zm4 0h2v-9h-2v9zm4 0h2V6h-2v11zm4 0h2V9h-2v8z"></path></svg>
+        </div>
+        <div class="app-icon" data-target="screen-breathing" title="Calm">
+            <svg viewBox="0 0 24 24"><path d="M3 13.5c2.49 0 4.5-2.01 4.5-4.5S5.49 4.5 3 4.5 0 6.51 0 9s2.01 4.5 3 4.5zm0-7c1.38 0 2.5 1.12 2.5 2.5S4.38 11.5 3 11.5 0 10.38 0 9s1.12-2.5 2.5-2.5zM21 4.5c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5S23.49 4.5 21 4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5S19.62 6.5 21 6.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM12 9.5c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>
+        </div>
+    </nav>
+    
+    <nav class="page-nav">
+        <a href="index.html" class="btn">Dashboard</a> 
+        <a href="home1.html" class="btn">Home</a>
+    </nav>
+    
+    <script>
+        // --- Page Load Transition (CRITICAL) ---
+        window.addEventListener('load', () => {
+            document.body.classList.add('page-loaded');
+        });
+
+        // --- Smooth Page Navigation ---
+        document.querySelectorAll('a.btn').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const destination = this.getAttribute('href');
+                document.body.classList.add('page-exit');
+                setTimeout(() => {
+                    window.location.href = destination;
+                }, 600); 
+            });
+        });
+
+        // --- Watch App Navigation ---
+        const appIcons = document.querySelectorAll('.app-icon');
+        const appScreens = document.querySelectorAll('.app-screen');
+        const body = document.body; 
+
+        // --- Helper function for navigation ---
+        function navigateToScreen(targetScreenId) {
+            // Update screens
+            appScreens.forEach(screen => {
+                screen.classList.remove('active');
+                if (screen.id === targetScreenId) {
+                    screen.classList.add('active');
+                }
+            });
+            // Update icons
+            appIcons.forEach(icon => {
+                icon.classList.remove('active');
+                if (icon.getAttribute('data-target') === targetScreenId) {
+                    icon.classList.add('active');
+                }
+            });
+        }
+
+        appIcons.forEach(icon => {
+            icon.addEventListener('click', () => {
+                if(window.navigator.vibrate) {
+                    window.navigator.vibrate(50);
+                }
+                const targetId = icon.getAttribute('data-target');
+                navigateToScreen(targetId);
+                
+                // --- MODIFIED: Simulation Logic ---
+                switch (targetId) {
+                    case 'screen-breathing':
+                        startCalmingProtocol(true); 
+                        break;
+                    
+                    case 'screen-emotion':
+                    case 'screen-clock':
+                    case 'screen-sleep':
+                    case 'screen-history':
+                    case 'screen-vitals':
+                         if (!isSimulationRunning && !isCalmingActive) {
+                            startSimulation();
+                        }
+                        break;
+                }
+            });
+        });
+        
+        // --- Live Clock Function (ANALOG) ---
+        function updateClock() {
+            const now = new Date();
+            const secondHand = document.getElementById('clock-hand-second');
+            const minuteHand = document.getElementById('clock-hand-minute');
+            const hourHand = document.getElementById('clock-hand-hour');
+            const dateEl = document.getElementById('clock-date');
+            if (!secondHand || !minuteHand || !hourHand || !dateEl) return; 
+            const seconds = now.getSeconds();
+            const minutes = now.getMinutes();
+            const hours = now.getHours();
+            const secondDegrees = (seconds / 60) * 360;
+            const minuteDegrees = (minutes / 60) * 360 + (seconds / 60) * 6;
+            const hours12 = hours % 12;
+            const hourDegrees = (hours12 / 12) * 360 + (minutes / 60) * 30;
+            secondHand.style.transform = `translateX(-50%) rotate(${secondDegrees}deg)`;
+            minuteHand.style.transform = `translateX(-50%) rotate(${minuteDegrees}deg)`;
+            hourHand.style.transform = `translateX(-50%) rotate(${hourDegrees}deg)`;
+            dateEl.textContent = now.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            }).toUpperCase();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        
+        // --- SIMULATION ENGINE ---
+
+        const SENSORS = {
+            'Heart Rate': { color: '#FF6384', unit: ' BPM', lastValue: 0 },
+            'HRV': { color: '#36A2EB', unit: ' ms', lastValue: 0 },
+            'GSR': { color: '#FFCE56', unit: ' µS', lastValue: 0 },
+            'Skin Temp': { color: '#FFA500', unit: ' °C', lastValue: 0 },
+            'EMG': { color: '#9966FF', unit: ' µV', lastValue: 0 },
+            'Pulse Oximeter': { color: '#4BC0C0', unit: ' %', lastValue: 0 },
+            'Breathing': { color: '#F7464A', unit: ' /min', lastValue: 0 },
+            'Stress Score': { color: '#00A9FF', unit: '', lastValue: 0 }
+        };
+        
+        const EMOTION_DATA = {
+            'NEUTRAL': {
+                color: 'var(--neutral-color)',
+                ranges: { 'Heart Rate': [65, 75], 'HRV': [55, 75], 'GSR': [0.2, 0.8], 'Skin Temp': [33.5, 34], 'EMG': [1, 5], 'Pulse Oximeter': [98, 99], 'Breathing': [12, 16], 'Stress Score': [5, 15] }
+            },
+            'HAPPY': {
+                color: 'var(--happy-color)',
+                ranges: { 'Heart Rate': [70, 85], 'HRV': [50, 70], 'GSR': [0.5, 1], 'Skin Temp': [33.5, 34.5], 'EMG': [2, 8], 'Pulse Oximeter': [98, 99], 'Breathing': [14, 18], 'Stress Score': [10, 25] }
+            },
+            'ANXIOUS': {
+                color: 'var(--anxious-color)',
+                ranges: { 'Heart Rate': [85, 110], 'HRV': [30, 45], 'GSR': [1.5, 3], 'Skin Temp': [33, 34], 'EMG': [10, 20], 'Pulse Oximeter': [96, 98], 'Breathing': [16, 22], 'Stress Score': [60, 80] }
+            },
+            'STRESSED': {
+                color: 'var(--stressed-color)',
+                ranges: { 'Heart Rate': [95, 120], 'HRV': [20, 35], 'GSR': [2, 4], 'Skin Temp': [32, 33], 'EMG': [15, 25], 'Pulse Oximeter': [95, 97], 'Breathing': [18, 25], 'Stress Score': [75, 95] }
+            },
+            'ANGRY': {
+                color: 'var(--angry-color)',
+                ranges: { 'Heart Rate': [100, 130], 'HRV': [15, 30], 'GSR': [3, 5], 'Skin Temp': [34, 35], 'EMG': [20, 30], 'Pulse Oximeter': [95, 97], 'Breathing': [20, 28], 'Stress Score': [85, 100] }
+            }
+        };
+
+        const EMOTIONS = Object.keys(EMOTION_DATA).filter(e => e !== 'NEUTRAL');
+        let simulationInterval;
+        let calmingInterval;
+        let simulationDurationTimer; 
+        let calmingDurationTimer;   
+
+        let isSimulationRunning = false;
+        let isCalmingActive = false;
+        let notificationIsShowing = false; 
+        let lastAlertDismissTime = 0; // NEW: For alert cooldown
+        const ALERT_COOLDOWN_MS = 60000; // 1 minute
+        let currentEmotion = 'NEUTRAL';
+        let previousEmotion = 'NEUTRAL';
+        let transitionStartTime = 0;
+        const EMOTION_TRANSITION_DURATION = 1000;
+
+        function easeInOutQuad(t) {
+            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        }
+        
+        function getRandomValue(min, max, volatility = 1) { 
+            return (Math.random() * (max - min) + min) + (Math.random() - 0.5) * volatility; 
+        }
+
+        function updateEmotionState(emotion) {
+            if (emotion === currentEmotion) return; 
+            const watchEmotionText = document.getElementById('watch-emotion-text');
+            if (watchEmotionText) {
+                watchEmotionText.textContent = emotion;
+                watchEmotionText.style.color = EMOTION_DATA[emotion].color;
+            }
+            previousEmotion = currentEmotion; 
+            currentEmotion = emotion;
+            transitionStartTime = Date.now();
+        }
+
+        function updateSensorData(targetEmotionData, transitionProgress = 1) {
+            const vitalsList = document.getElementById('vitals-list');
+            let vitalsHTML = ''; 
+
+            Object.keys(SENSORS).forEach(sensorName => {
+                if (!targetEmotionData.ranges[sensorName]) return; 
+                const [targetMin, targetMax] = targetEmotionData.ranges[sensorName];
+                let value;
+                if (transitionProgress < 1) { 
+                    const startValue = SENSORS[sensorName].lastValue;
+                    const prevRanges = EMOTION_DATA[previousEmotion]?.ranges[sensorName] || targetEmotionData.ranges[sensorName];
+                    const interpolatedValue = startValue + (getRandomValue(targetMin, targetMax) - startValue) * easeInOutQuad(transitionProgress);
+                    value = interpolatedValue;
+                } else { 
+                    value = getRandomValue(targetMin, targetMax);
+                }
+                if (sensorName === 'HRV') {
+                    const hrValue = SENSORS['Heart Rate'].lastValue;
+                    const hrInfluence = (hrValue - 70) * -0.3; 
+                    value = Math.max(targetMin, Math.min(targetMax, value + hrInfluence));
+                }
+                SENSORS[sensorName].lastValue = value;
+
+                if (sensorName !== 'Stress Score') {
+                    vitalsHTML += `
+                        <div class="vital-item">
+                            <span>${sensorName}</span>
+                            <span>${value.toFixed(1)} ${SENSORS[sensorName].unit}</span>
+                        </div>
+                    `;
+                }
+                
+                if (sensorName === 'Stress Score') {
+                    const stressScoreEl = document.getElementById('watch-stress-score');
+                    stressScoreEl.textContent = value.toFixed(0);
+
+                    // --- REFINED NOTIFICATION LOGIC ---
+                    const now = Date.now();
+                    const canShowAlert = (now - lastAlertDismissTime > ALERT_COOLDOWN_MS);
+
+                    if (value > 80 && !notificationIsShowing && !isCalmingActive && canShowAlert) {
+                        notificationIsShowing = true;
+                        if(window.navigator.vibrate) {
+                            window.navigator.vibrate([150, 50, 150]); // Urgent vibrate
+                        }
+                        document.getElementById('alert-score-value').textContent = value.toFixed(0);
+                        document.getElementById('stress-notification').classList.add('active');
+                    }
+                    // --- End Notification Logic ---
+
+                    if (value > 80) {
+                        stressScoreEl.classList.add('alert');
+                    } else {
+                        stressScoreEl.classList.remove('alert');
+                    }
+                }
+
+                // --- Update Clock Complications ---
+                if (sensorName === 'Heart Rate') {
+                    document.getElementById('clock-hr-value').textContent = value.toFixed(0);
+                }
+                if (sensorName === 'Stress Score') {
+                    document.getElementById('clock-stress-value').textContent = value.toFixed(0);
+                }
+            });
+            if (vitalsList) {
+                vitalsList.innerHTML = vitalsHTML;
+            }
+        }
+
+        function startCalmingProtocol(manual = false) {
+            if (isCalmingActive) return; 
+            
+            clearInterval(simulationInterval);
+            clearTimeout(simulationDurationTimer); 
+            isSimulationRunning = false;
+            isCalmingActive = true;
+            body.classList.add('calming-active');
+            updateEmotionState('NEUTRAL');
+            
+            navigateToScreen('screen-breathing');
+
+            const calmData = EMOTION_DATA['NEUTRAL'];
+            let progress = 0;
+            const duration = 15000;
+            const steps = 150; 
+            const stepDuration = duration / steps;
+            previousEmotion = currentEmotion; 
+
+            calmingInterval = setInterval(() => {
+                progress += 1 / steps;
+                if (progress >= 1) {
+                    clearInterval(calmingInterval);
+                    return;
+                }
+                updateSensorData(calmData, progress); 
+            }, stepDuration);
+
+            calmingDurationTimer = setTimeout(() => {
+                resetSimulationState('screen-clock');
+            }, duration);
+        }
+        
+        function resetSimulationState(targetScreenId = 'screen-clock') {
+            clearInterval(simulationInterval);
+            clearTimeout(simulationDurationTimer);
+            clearInterval(calmingInterval);
+            clearTimeout(calmingDurationTimer);
+            
+            isSimulationRunning = false;
+            isCalmingActive = false;
+            // notificationIsShowing is NOT reset here, only on dismiss
+            
+            body.classList.remove('calming-active');
+            updateEmotionState('NEUTRAL');
+            updateSensorData(EMOTION_DATA['NEUTRAL']); 
+            
+            // Hide notification panel if it was open
+            document.getElementById('stress-notification').classList.remove('active');
+            
+            navigateToScreen(targetScreenId);
+
+            // Restart the main simulation
+            startSimulation();
+        }
+
+        function startSimulation() {
+            if (isSimulationRunning) return;
+            
+            isSimulationRunning = true;
+            let timeElapsed = 0;
+            const simulationLength = 60000; // 1 minute
+            const updateInterval = 1500; 
+
+            simulationInterval = setInterval(() => {
+                let targetEmotionData;
+                if (Date.now() - transitionStartTime < EMOTION_TRANSITION_DURATION) {
+                    targetEmotionData = EMOTION_DATA[currentEmotion];
+                } else {
+                    const randomEmotion = EMOTIONS[Math.floor(Math.random() * EMOTIONS.length)];
+                    updateEmotionState(randomEmotion);
+                    targetEmotionData = EMOTION_DATA[randomEmotion];
+                }
+                
+                let progress = Math.min(1, (Date.now() - transitionStartTime) / EMOTION_TRANSITION_DURATION);
+                updateSensorData(targetEmotionData, progress);
+
+            }, updateInterval / 2); // Update data more frequently
+        }
+
+        // --- NEW: Function to generate clock marks ---
+        function createClockMarks() {
+            const container = document.getElementById('clock-marks');
+            if (!container) return;
+            let marksHTML = '';
+            for (let i = 0; i < 60; i++) {
+                if (i % 5 === 0) {
+                    // Hour mark
+                    marksHTML += `<div class="clock-mark hour-mark" style="transform: rotate(${i * 6}deg)"></div>`;
+                } else {
+                    // Minute mark
+                    marksHTML += `<div class="clock-mark minute-mark" style="transform: rotate(${i * 6}deg)"></div>`;
+                }
+            }
+            container.innerHTML = marksHTML;
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            createClockMarks();
+
+            Object.keys(SENSORS).forEach(name => {
+                if (EMOTION_DATA['NEUTRAL'].ranges[name]) {
+                    const [min, max] = EMOTION_DATA['NEUTRAL'].ranges[name];
+                    SENSORS[name].lastValue = getRandomValue(min, max);
+                }
+            });
+            updateEmotionState('NEUTRAL'); 
+            updateSensorData(EMOTION_DATA['NEUTRAL']); 
+            
+            
+            // --- Dynamic Data Initialization ---
+            function randomizeMockupData() {
+                // 1. Randomize Sleep Data
+                const sleepScoreEl = document.getElementById('sleep-score-value');
+                const sleepTimeEl = document.getElementById('sleep-time-value');
+                const sleepAwakeEl = document.getElementById('sleep-awake-value');
+
+                if (sleepScoreEl) {
+                    const randomScore = Math.floor(Math.random() * 26) + 70; // 70-95
+                    sleepScoreEl.textContent = randomScore;
+                }
+                if (sleepTimeEl) {
+                    const randomHour = Math.floor(Math.random() * 3) + 6; // 6-8 hours
+                    const randomMin = Math.floor(Math.random() * 60);
+                    sleepTimeEl.textContent = `${randomHour}h ${randomMin.toString().padStart(2, '0')}m`;
+                }
+                if (sleepAwakeEl) {
+                    const randomAwake = Math.floor(Math.random() * 26) + 5; // 5-30 mins
+                    sleepAwakeEl.textContent = `${randomAwake}m`;
+                }
+
+                // 2. Randomize History Chart
+                for (let i = 1; i <= 7; i++) {
+                    const barEl = document.getElementById(`bar-${i}`);
+                    if (barEl) {
+                        const randomHeight = Math.floor(Math.random() * 71) + 20; // 20-90%
+                        barEl.style.height = randomHeight + '%';
+                        
+                        barEl.classList.remove('high', 'v-high');
+                        if (randomHeight > 75) {
+                            barEl.classList.add('v-high');
+                        } else if (randomHeight > 60) {
+                            barEl.classList.add('high');
+                        }
+                    }
+                }
+            }
+            randomizeMockupData();
+
+            // --- Notification Button Listeners ---
+            document.getElementById('alert-dismiss-btn').addEventListener('click', () => {
+                document.getElementById('stress-notification').classList.remove('active');
+                notificationIsShowing = false; // Allow new alerts
+                lastAlertDismissTime = Date.now(); // Start 1-minute cooldown
+            });
+
+            document.getElementById('alert-calm-btn').addEventListener('click', () => {
+                document.getElementById('stress-notification').classList.remove('active');
+                notificationIsShowing = false;
+                lastAlertDismissTime = Date.now(); // Start 1-minute cooldown
+                startCalmingProtocol(true); // Start calming
+            });
+
+            // --- Start background simulation on load ---
+            startSimulation();
+        });
+    </script>
+</body>
+</html>
