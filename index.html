@@ -3,52 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>NeuraSync Live Demo</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="description" content="NeuraSync: A wearable device that detects emotions like anger, frustration, anxiety, and stress in real-time, providing feedback to help you achieve inner calm and emotional balance.">
+    <title>NeuraSync - Embrace Inner Calm</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-color: #02111B;
-            --text-color: #E0E0E0;
-            --primary-color: #00A9FF;
+            --bg-color: #010A13; /* Even darker, more immersive background */
+            --panel-bg: rgba(18, 29, 44, 0.4); /* Frosted glass effect */
+            --panel-border: rgba(40, 60, 80, 0.6);
+            --text-color: #E6EBF0;
+            --text-secondary: #A0B0C0;
+            --primary-color: #00C2FF; /* Slightly brighter blue */
             --accent-cyan: #00F6FF;
-            --panel-color: #1A1D23;
-            --border-color: #2c313a;
+            --accent-problem: #FF708C; /* Softer red */
+            --accent-solution: #8AFFB0; /* Brighter green */
+            --glow-strong: 0 0 20px var(--primary-color), 0 0 40px var(--accent-cyan);
+            --glow-soft: 0 0 10px rgba(0, 194, 255, 0.3);
 
-            /* Emotion-specific colors */
-            --neutral-color: #E0E0E0;
-            --happy-color: #FFD700; /* Gold */
-            --anxious-color: #FFA500; /* Orange */
-            --stressed-color: #FF4500; /* Red-Orange */
-            --angry-color: #FF0000; /* Pure Red */
+            /* NeuraSync H1 colors */
+            --NeuraSync-color-1: #00C2FF; /* Original primary blue */
+            --NeuraSync-shadow-1: 0 0 20px #00C2FF, 0 0 40px #00F6FF; 
 
-            /* New: Calming-specific colors */
-            --calming-bg: #002233; /* Soothing blue */
-            --calming-text: #8AFFB0; /* Greenish for calm */
-            --glow-strong: 0 0 15px var(--primary-color), 0 0 30px var(--accent-cyan);
-            --glow-soft: 0 0 8px rgba(0, 194, 255, 0.3);
+            --NeuraSync-color-2: #8AFFB0; /* Solution green */
+            --NeuraSync-shadow-2: 0 0 20px #8AFFB0, 0 0 40px rgba(138, 255, 176, 0.8);
+
+            --NeuraSync-color-3: #FF708C; /* Problem red */
+            --NeuraSync-shadow-3: 0 0 20px #FF708C, 0 0 40px rgba(255, 112, 140, 0.8);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
 
         body {
-            font-family: 'Montserrat', sans-serif; /* Consistent with landing page */
+            font-family: 'Montserrat', sans-serif; /* More modern body font */
             background-color: var(--bg-color);
             color: var(--text-color);
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            height: 100vh;
-            opacity: 0;
-            transition: opacity 0.8s ease-out, background-color 1s ease-in-out;
+            overflow-x: hidden;
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            opacity: 0; /* Hidden on load */
+            transition: opacity 0.8s ease-out; /* Fade in on load */
+            cursor: none; /* Hide default cursor */
         }
-        
         body.page-loaded {
             opacity: 1;
         }
@@ -56,406 +64,641 @@
             opacity: 0;
             transition: opacity 0.6s ease-in;
         }
-
-        body.calming-active {
-            background-color: var(--calming-bg); /* Calming background */
-        }
-
-        .main-container {
-            display: flex;
-            width: 95vw;
-            flex-grow: 1;
-            max-width: 1600px;
-            gap: 20px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            min-height: 0;
-        }
-
-        .panel {
-            flex: 1;
-            background-color: var(--panel-color);
-            border-radius: 15px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 25px;
-            box-sizing: border-box;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            -webkit-backdrop-filter: blur(5px);
-            backdrop-filter: blur(5px);
-        }
-
-        #face-panel {
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        #face-image {
-            max-width: 80%;
-            max-height: 80%;
-            object-fit: contain;
-            animation: face-pulse 2s infinite alternate ease-in-out; 
-            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        #face-image.fade-out {
+        
+        /* --- NEW: Cursor Glow --- */
+        .cursor-glow {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
             opacity: 0;
-            transform: scale(0.95);
+            box-shadow: 0 0 15px var(--primary-color), 0 0 25px var(--primary-color);
+            transition: transform 0.1s ease-out, opacity 0.2s ease-out;
+        }
+        body:hover .cursor-glow { 
+            opacity: 0.5; 
+        }
+        .cursor-glow.pointer { 
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0.8;
+            background-color: rgba(0, 194, 255, 0.1);
+        }
+        /* Hide cursor on interactive elements */
+        a, button, .simulation, .info-block {
+            cursor: none;
         }
 
-        @keyframes face-pulse {
-            0% { transform: scale(1); opacity: 0.95; }
-            100% { transform: scale(1.02); opacity: 1; }
+        /* --- Animated Background (Enhanced Aurora) --- */
+        .aurora-container {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            z-index: -2; /* Ensure it's behind everything */
+            background-color: var(--bg-color);
         }
-
-        #emotion-text {
+        .aurora {
             position: absolute;
-            top: 40px;
-            font-family: 'Orbitron', sans-serif; /* Futuristic font */
-            font-size: 2.5rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--neutral-color);
-            opacity: 0.9;
-            text-shadow: 0 0 10px rgba(0,0,0,0.5);
-            transition: color 0.5s ease-in-out, text-shadow 0.5s ease-in-out;
+            border-radius: 50%;
+            opacity: 0.18; /* Slightly more visible */
+            filter: blur(150px); /* More blur for ethereal look */
+            animation: move-aurora 50s ease-in-out infinite alternate;
+        }
+        .aurora-1 {
+            width: 900px; height: 700px;
+            background: radial-gradient(circle, var(--primary-color), transparent 70%);
+            top: -250px; left: -300px;
+        }
+        .aurora-2 {
+            width: 700px; height: 500px;
+            background: radial-gradient(circle, var(--accent-cyan), transparent 70%);
+            bottom: -200px; right: -250px;
+            animation-delay: 10s;
+            animation-duration: 45s;
+        }
+        .aurora-3 {
+            width: 600px; height: 800px;
+            background: radial-gradient(circle, var(--accent-solution), transparent 70%);
+            top: 50%; left: 10%;
+            transform: translate(-50%, -50%);
+            animation-delay: 20s;
+            animation-duration: 55s;
+        }
+        @keyframes move-aurora {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            33% { transform: translate(150px, 80px) rotate(90deg) scale(1.1); }
+            66% { transform: translate(-100px, -120px) rotate(270deg) scale(0.9); }
+            100% { transform: translate(0, 0) rotate(360deg) scale(1); }
         }
 
-        #emotion-text.calming-glow {
-            color: var(--calming-text);
-            text-shadow: 0 0 15px var(--calming-text), 0 0 25px rgba(138,255,176,0.5);
-        }
-
-        #graph-panel {
-            justify-content: space-between;
-            gap: 15px; /* Spacing between chart and readouts */
-        }
-
-        .graph-container {
-            width: 100%;
-            flex-grow: 1;
+        /* --- Global Sections --- */
+        main, section {
+            width: 90%;
+            max-width: 1300px; /* Wider content area */
+            margin: 0 auto;
+            padding: 100px 0; /* More vertical space */
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeIn 1s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
+            animation-delay: var(--delay, 0s); /* For staggered animations */
             position: relative;
-            min-height: 200px; /* Ensure chart has minimum height */
+            z-index: 1; /* Ensure content is above aurora */
         }
 
-        .sensor-readouts {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Responsive grid */
-            gap: 15px;
-            width: 100%;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.05); /* Subtle separator */
-        }
-
-        .sensor {
-            background-color: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sensor-name {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .sensor-value {
-            font-family: 'Orbitron', sans-serif; /* Futuristic font for values */
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            text-shadow: 0 0 5px rgba(0, 169, 255, 0.3);
-            transition: color 0.3s ease-in-out;
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
-        .footer-buttons-container {
-            width: 100%;
-            padding: 20px 0;
-            background-color: var(--panel-color);
-            border-top: 1px solid var(--border-color);
+        /* --- Header --- */
+        header {
+            padding: 30px 0;
+            text-align: center;
+            border-bottom: 1px solid var(--panel-border);
+            backdrop-filter: blur(10px); /* Header blur */
+            background-color: rgba(1, 10, 19, 0.6); /* Slightly more opaque for header */
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-family: 'Orbitron', sans-serif; /* Futuristic font for title */
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 8px; /* Increased letter spacing */
+            text-transform: uppercase;
+            /* Use animation for color and shadow */
+            animation: NeuraSync-color-cycle 10s infinite alternate;
+        }
+
+        /* Keyframes for NeuraSync H1 color cycling */
+        @keyframes NeuraSync-color-cycle {
+            0% {
+                color: var(--NeuraSync-color-1);
+                text-shadow: var(--NeuraSync-shadow-1);
+            }
+            33% {
+                color: var(--NeuraSync-color-2);
+                text-shadow: var(--NeuraSync-shadow-2);
+            }
+            66% {
+                color: var(--NeuraSync-color-3);
+                text-shadow: var(--NeuraSync-shadow-3);
+            }
+            100% {
+                color: var(--NeuraSync-color-1);
+                text-shadow: var(--NeuraSync-shadow-1);
+            }
+        }
+        
+        .emotions {
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 20px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 25px;
+            font-size: 1.1rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        .emotions p {
+            transition: color 0.3s ease, transform 0.3s ease;
+            position: relative; /* For pop-up image positioning */
+            padding-bottom: 5px; /* Add space for the image below */
+        }
+        .emotions p:hover {
+            color: var(--primary-color);
+            transform: translateY(-3px);
+        }
+
+        .emotions .emotion-image {
+            position: absolute;
+            top: 30px; /* Position below the text */
+            left: 50%;
+            transform: translateX(-50%) scale(0); /* Start hidden and small */
+            width: 70px; /* Bigger size */
+            height: 70px; /* Bigger size */
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.15); /* Slightly more visible background */
+            padding: 8px; /* More padding */
+            box-shadow: 0 0 15px rgba(0, 194, 255, 0.7); /* Stronger glow */
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; /* More bouncy transition */
+            opacity: 0;
+            pointer-events: none; /* Make sure it doesn't block mouse events on the text */
             z-index: 10; /* Ensure it's above other elements */
         }
-
-        .footer-buttons-container button,
-        .footer-buttons-container .btn-link {
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-cyan));
-            color: #111;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem; /* Slightly smaller for better fit */
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 20px rgba(0, 169, 255, 0.4);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            width: auto;
-            max-width: 400px;
-            text-decoration: none;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .footer-buttons-container button:hover:not(:disabled),
-        .footer-buttons-container .btn-link:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 25px rgba(0, 246, 255, 0.5);
-        }
-        
-        .footer-buttons-container button:disabled {
-            background: #555;
-            color: #aaa;
-            cursor: not-allowed;
-            transform: scale(1);
-            box-shadow: none;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 1024px) {
-            .main-container {
-                flex-direction: column;
-                margin-top: 10px;
-                margin-bottom: 10px;
-            }
-            #emotion-text {
-                font-size: 2rem;
-                top: 20px;
-            }
-            .panel {
-                padding: 20px;
-            }
-            .sensor-readouts {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            .footer-buttons-container {
-                flex-direction: column;
-                gap: 15px;
-                padding: 15px 0;
-            }
-            .footer-buttons-container button,
-            .footer-buttons-container .btn-link {
-                width: 80%;
-                max-width: 300px;
-                font-size: 1.1rem;
-                padding: 12px 25px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            #emotion-text {
-                font-size: 1.8rem;
-                top: 15px;
-            }
-            .sensor-readouts {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .sensor-value {
-                font-size: 1.1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            #emotion-text {
-                font-size: 1.5rem;
-                letter-spacing: 2px;
-                top: 10px;
-            }
-            .sensor-readouts {
-                grid-template-columns: 1fr; /* Single column on very small screens */
-            }
-            .sensor-name {
-                font-size: 0.75rem;
-            }
-            .sensor-value {
-                font-size: 1rem;
-            }
-        }
-
-        /* --- FEATURE 1: Breathing Guide Styles --- */
-        #breathing-guide {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: rgba(0, 34, 51, 0.85); 
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s, visibility 0.5s;
-            pointer-events: none;
-        }
-
-        #breathing-guide.show {
+        .emotions p:hover .emotion-image {
+            transform: translateX(-50%) scale(1); /* Pop up and grow */
             opacity: 1;
-            visibility: visible;
         }
 
-        .breathing-circle {
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, var(--accent-cyan), var(--primary-color));
-            border-radius: 50%;
-            box-shadow: var(--glow-strong);
-            animation: breathe 8s ease-in-out infinite;
+        /* --- Hero Section --- */
+        .hero-section {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            align-items: center;
+            gap: 60px; /* More space */
+            padding-top: 120px;
+            padding-bottom: 120px;
         }
 
-        #breathing-text {
-            /* This overrides the main #emotion-text style */
-            position: static; 
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            color: white;
-            margin-top: 30px;
-            text-shadow: 0 0 10px white;
-            animation: breathe-text 8s ease-in-out infinite;
+        .watch-container {
+            grid-column: 2 / 3;
+            text-align: center;
+            position: relative;
+            perspective: 1000px;
+            z-index: 2;
+        }
+        .watch-container img {
+            max-width: 90%;
+            filter: drop-shadow(0 0 40px rgba(0, 246, 255, 0.3));
+            animation: float 5s ease-in-out infinite alternate;
+            transform-style: preserve-3d; /* Enable 3D transforms */
+        }
+        @keyframes float {
+            0% { transform: translateY(-15px) rotateX(0deg); }
+            100% { transform: translateY(15px) rotateX(2deg); }
         }
 
-        @keyframes breathe {
-            0%   { transform: scale(0.8); opacity: 0.7; }
-            50%  { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.7; }
-        }
-
-        @keyframes breathe-text {
-            0%   { content: 'Breathe In...'; opacity: 0.7; }
-            45%  { content: 'Breathe In...'; opacity: 1; }
-            50%  { content: 'Hold'; opacity: 1; }
-            55%  { content: 'Breathe Out...'; opacity: 1; }
-            95%  { content: 'Breathe Out...'; opacity: 0.7; }
-            100% { content: 'Breathe In...'; opacity: 0.7; }
-        }
-
-        /* --- FEATURE 2: Event Log Styles --- */
-        .log-container {
-            margin-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            padding-top: 15px;
+        .info-column {
             display: flex;
             flex-direction: column;
-            min-height: 100px;
-            flex-shrink: 0;
+            gap: 50px;
+            text-align: center;
+            z-index: 1;
         }
 
-        .log-header {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
+        .info-block {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(15px); /* Stronger glassmorphism */
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .info-block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), var(--glow-soft);
+        }
+
+        .info-block img {
+            max-width: 80%;
+            height: auto;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            filter: grayscale(10%) brightness(1.1);
+            transition: transform 0.3s ease-out; /* Add transition for smooth zoom */
+        }
+        .info-block img:hover {
+            transform: scale(1.1); /* Zoom in 10% on hover */
+        }
+
+        .info-block p {
+            font-size: 1.15rem;
             color: var(--text-secondary);
-            letter-spacing: 1px;
+            margin-top: 15px;
+        }
+
+        .info-block .label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: block;
             margin-bottom: 10px;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
+        .label.problem { color: var(--accent-problem); text-shadow: 0 0 8px rgba(255,112,140,0.4); }
+        .label.solution { color: var(--accent-solution); text-shadow: 0 0 8px rgba(138,255,176,0.4); }
 
-        .log-box {
-            flex-grow: 1;
-            background-color: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            padding: 10px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column-reverse; /* New messages at top */
-            height: 150px; /* Fixed height */
-        }
-
-        .log-box p {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            padding-bottom: 5px;
-            margin-bottom: 5px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            animation: log-fade-in 0.3s ease-out;
-        }
-        .log-box p:first-child {
-            border-bottom: none;
-        }
-        .log-box p .log-time {
+        /* --- Peripherals Section --- */
+        .peripherals-section h2 {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            margin-bottom: 80px;
             color: var(--primary-color);
-            margin-right: 10px;
+            text-shadow: var(--glow-strong);
+            animation: pulse-glow 3s infinite alternate;
         }
-        .log-box p .log-warn {
-            color: var(--anxious-color);
+
+        @keyframes pulse-glow {
+            from { text-shadow: var(--glow-strong); }
+            to { text-shadow: 0 0 25px var(--primary-color), 0 0 50px var(--accent-cyan), 0 0 70px var(--primary-color); }
+        }
+
+        .simulation {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            margin: 0 auto;
+            border-radius: 50%;
+            cursor: none; /* Use custom cursor */
+        }
+
+        .simulation .component {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            text-align: center;
+            transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out, left 0.8s ease-in-out, top 0.8s ease-in-out;
+            transform-style: preserve-3d;
+            opacity: 0; /* Hidden initially, shown by JS */
+        }
+        .simulation .component:hover {
+            transform: scale(1.15) !important;
+            box-shadow: var(--glow-soft);
+        }
+        .simulation.paused .component {
+            transition: none !important;
+        }
+
+        .simulation .component img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            padding: 15px;
+            object-fit: contain;
+            filter: brightness(1.2);
+            box-shadow: var(--glow-soft);
+            transition: transform 0.3s ease;
+        }
+
+        .simulation .component:hover img {
+            transform: scale(1.05);
+        }
+
+        .simulation .component p {
+            margin-top: 12px;
             font-weight: 600;
-        }
-        .log-box p .log-calm {
-            color: var(--calming-text);
-            font-weight: 600;
-        }
-
-        @keyframes log-fade-in {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
+            color: var(--text-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 5px rgba(0, 246, 255, 0.3);
+            transform: rotate(0deg) !important; 
+            animation: none !important; 
         }
 
-        /* --- FEATURE 3: Pulsing Alert Styles --- */
-        .sensor.alert .sensor-value {
-            color: var(--angry-color) !important;
-            animation: pulse-red 1s infinite alternate;
+        .simulation .centerImage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            transform: translate(-50%, -50%) rotate(0deg);
+            border-radius: 50%;
+            display: none;
+            background-image: url('wat.png'); /* Your original watch image */
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            filter: drop-shadow(0 0 50px var(--accent-cyan)) drop-shadow(0 0 20px var(--primary-color));
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+        .simulation.paused .centerImage {
+            transition: none !important;
         }
 
-        @keyframes pulse-red {
-            from { 
-                text-shadow: 0 0 5px var(--angry-color);
-                transform: scale(1);
+        /* --- NEW: Features Section --- */
+        .features-section h2 {
+          text-align: center;
+          font-family: 'Orbitron', sans-serif;
+          font-size: 3rem;
+          margin-bottom: 80px;
+          color: var(--primary-color);
+          text-shadow: var(--glow-strong);
+          animation: pulse-glow 3s infinite alternate;
+        }
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 30px;
+        }
+        .feature-block {
+          background-color: var(--panel-bg);
+          border: 1px solid var(--panel-border);
+          border-radius: 20px;
+          padding: 30px;
+          backdrop-filter: blur(15px);
+          box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          text-align: center;
+        }
+        .feature-block:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.4), var(--glow-soft);
+        }
+        .feature-block h3 {
+          font-family: 'Orbitron', sans-serif;
+          font-size: 1.4rem;
+          font-weight: 700;
+          color: var(--accent-solution);
+          margin-bottom: 15px;
+        }
+        .feature-block p {
+          font-size: 1rem;
+          color: var(--text-secondary);
+        }
+
+        /* --- Action Area (Call to Action) --- */
+        .action-area {
+            text-align: center;
+            padding: 80px 0;
+            background: linear-gradient(180deg, rgba(1, 10, 19, 0) 0%, rgba(1, 10, 19, 0.8) 100%);
+        }
+        .action-area .btn {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-cyan));
+            color: var(--bg-color);
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: none; /* Use custom cursor */
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 194, 255, 0.4);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .action-area .btn:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 246, 255, 0.6);
+        }
+
+        /* --- NEW: Notify Form --- */
+        .notify-form {
+          margin-top: 50px;
+          width: 100%;
+          max-width: 500px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .notify-form p {
+          font-size: 1.2rem;
+          color: var(--text-secondary);
+          margin-bottom: 20px;
+        }
+        .notify-form form {
+          display: flex;
+          gap: 10px;
+          background-color: var(--panel-bg);
+          border: 1px solid var(--panel-border);
+          border-radius: 50px;
+          padding: 8px;
+        }
+        .notify-form input[type="email"] {
+          flex-grow: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: var(--text-color);
+          font-size: 1.1rem;
+          padding: 0 20px;
+          font-family: 'Montserrat', sans-serif;
+          cursor: none; /* Use custom cursor */
+        }
+        .notify-form .btn-notify {
+          background: linear-gradient(90deg, var(--primary-color), var(--accent-cyan));
+          color: var(--bg-color);
+          border: none;
+          padding: 12px 25px;
+          font-size: 1.1rem;
+          font-weight: 700;
+          border-radius: 50px;
+          cursor: none; /* Use custom cursor */
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+        }
+        .notify-form .btn-notify:hover {
+          transform: scale(1.05);
+          box-shadow: 0 5px 20px rgba(0, 246, 255, 0.5);
+        }
+
+        /* --- NEW: Footer --- */
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid var(--panel-border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            width: 100%;
+            z-index: 1;
+            background-color: rgba(1, 10, 19, 0.6);
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 1024px) {
+            .hero-section {
+                grid-template-columns: 1fr;
+                gap: 50px;
             }
-            to { 
-                text-shadow: 0 0 15px var(--angry-color), 0 0 25px var(--angry-color);
-                transform: scale(1.05);
+            .watch-container {
+                grid-row: 1 / 2;
+                margin-bottom: 20px;
             }
+            .info-column {
+                grid-row: 2 / 3;
+            }
+            header h1 { font-size: 2.2rem; }
+            .emotions { font-size: 1rem; gap: 15px; }
+            .peripherals-section h2, .features-section h2 { font-size: 2.2rem; }
+            .action-area .btn { font-size: 1.4rem; padding: 15px 30px; }
+        }
+        @media (max-width: 768px) {
+            .simulation {
+                width: 450px;
+                height: 450px;
+            }
+            .simulation .component {
+                width: 90px;
+                height: 90px;
+            }
+            .simulation .centerImage {
+                width: 220px;
+                height: 220px;
+            }
+            .info-block { padding: 25px; }
+            .info-block p { font-size: 1rem; }
+            .info-block .label { font-size: 1.2rem; }
+        }
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.8rem; letter-spacing: 3px; }
+            .emotions { font-size: 0.85rem; gap: 10px; }
+            .hero-section { padding-top: 80px; padding-bottom: 80px; }
+            .peripherals-section h2, .features-section h2 { font-size: 1.8rem; margin-bottom: 50px; }
+            .simulation {
+                width: 300px;
+                height: 300px;
+            }
+            .simulation .component {
+                width: 70px;
+                height: 70px;
+            }
+            .simulation .component p { font-size: 0.8rem; margin-top: 8px; }
+            .simulation .centerImage {
+                width: 180px;
+                height: 180px;
+            }
+            .action-area .btn { font-size: 1.2rem; padding: 12px 25px; }
         }
     </style>
 </head>
 <body>
-
-    <div class="main-container">
-        <div class="panel" id="face-panel">
-            <h2 id="emotion-text">DETECTING...</h2>
-            <img id="face-image" src="neutral.png" alt="Human Face displaying current emotion"> 
-            
-            <div id="breathing-guide">
-                <div class="breathing-circle"></div>
-                <p id="breathing-text">Breathe In...</p>
-            </div>
-        </div>
-
-        <div class="panel" id="graph-panel">
-            <div class="graph-container">
-                <canvas id="sensorChart"></canvas>
-            </div>
-            <div class="sensor-readouts" id="sensor-display">
-                </div>
-            
-            <div class="log-container">
-                <div class="log-header">EVENT LOG</div>
-                <div class="log-box" id="event-log">
-                    </div>
-            </div>
-        </div>
+    <div class="cursor-glow"></div> <div class="aurora-container">
+        <div class="aurora aurora-1"></div>
+        <div class="aurora aurora-2"></div>
+        <div class="aurora aurora-3"></div>
     </div>
+
+    <header>
+        <h1>NeuraSync</h1>
+        <div class="emotions" aria-label="Emotions detected by NeuraSync">
+            <p>ANGER<img class="emotion-image" src="ang.png" alt="Anger icon"></p>
+            <p>FRUSTRATION<img class="emotion-image" src="fru.png" alt="Frustration icon"></p>
+            <p>ANXIETY<img class="emotion-image" src="anx.png" alt="Anxiety icon"></p>
+            <p>STRESS<img class="emotion-image" src="stress.png" alt="Stress icon"></p>
+        </div>
+    </header>
+
+    <main class="hero-section">
+        <div class="info-column"> 
+            <div class="info-block" aria-label="Problem description for anger">
+                <img src="ang.png" alt="Icon representing anger">
+                <p><span class="label problem">Problem:</span> Almost 75 million people in India face anxiety, frustration, anger, and stress in their daily lives, impacting their personal well-being and mental health.</p>
+            </div>
+            <div class="info-block" aria-label="Problem description for anxiety">
+                <img src="anx.png" alt="Icon representing anxiety">
+                <p><span class="label problem">Impact:</span> These prevalent negative emotions lead to decreased productivity, strained relationships, and significant health issues.</p>
+            </div>
+        </div>
+        
+        <div class="watch-container"> 
+            <img src="wat.png" alt="NeuraSync Smartwatch, a wearable emotional regulator">
+        </div>
+        
+        <div class="info-column"> 
+            <div class="info-block" aria-label="Solution with NeuraSync">
+                <img src="fru.png" alt="Icon representing frustration, now a problem NeuraSync can solve">
+                <p><span class="label solution">Solution:</span> NeuraSync, a wearable wrist watch, detects emotional states in real-time. It then helps regulate them using advanced biofeedback and sensory feedback mechanisms.</p>
+            </div>
+            <div class="info-block" aria-label="Key benefit of NeuraSync">
+                <img src="CALM.png" alt="Icon representing calmness">
+                <p><span class="label solution">Benefit:</span> Achieve inner calm and improve mental well-being with personalized guidance and immediate emotional support.</p>
+            </div>
+        </div>
+    </main>
     
-    <div class="footer-buttons-container">
-        <button id="main-action-button">Activate NeuraSync</button>
-        <a href="home.html" class="btn-link">Home</a> 
-        <a href="tech.html" class="btn-link">Technology</a> 
-    </div>
+    <section class="peripherals-section">
+        <h2>NeuraSync Peripherals: The Tech Behind the Calm</h2>
+        <div class="simulation" aria-label="Interactive diagram of NeuraSync components">
+            <div class="component" data-name="ESP32"><img src="ESP32.png" alt="ESP32 Microcontroller"><p>ESP32</p></div>
+            <div class="component" data-name="GSR"><img src="GSR.png" alt="GSR Sensor"><p>GSR</p></div>
+            <div class="component" data-name="GYRO"><img src="gyr and acce.png" alt="Gyroscope & Accelerometer"><p>GYRO</p></div>
+            <div class="component" data-name="SKIN SENSOR"><img src="skin.png" alt="Skin Temperature Sensor"><p>SKIN SENSOR</p></div>
+            <div class="component" data-name="MOTOR"><img src="motor.png" alt="Vibration Motor"><p>MOTOR</p></div>
+            <div class="component" data-name="PPG"><img src="ppg.png" alt="PPG Sensor for Heart Rate"><p>PPG</p></div>
+            <div class="component" data-name="SPEAKER"><img src="speaker.png" alt="Mini Speaker"><p>SPEAKER</p></div>
+            <div class="component" data-name="BATTERY"><img src="battery.png" alt="Battery Icon"><p>BATTERY</p></div> 
+            <div class="centerImage"></div>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <h2>Core Features</h2>
+        <div class="features-grid">
+            <div class="feature-block">
+                <h3>Real-Time Detection</h3>
+                <p>Uses advanced biosensors to understand your emotional state, moment by moment.</p>
+            </div>
+            <div class="feature-block">
+                <h3>Haptic Biofeedback</h3>
+                <p>Gentle vibrations and thermal cues guide your breathing to restore calm.</p>
+            </div>
+            <div class="feature-block">
+                <h3>Guided Exercises</h3>
+                <p>On-demand breathing and meditation exercises directly on your wrist.</p>
+            </div>
+            <div class="feature-block">
+                <h3>Long-Term Tracking</h3>
+                <p>Our app visualizes your emotional trends, helping you identify triggers.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="action-area" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;">
+        <div style="display: flex; justify-content: center; gap: 20px;">
+            <a href="tech.html" class="btn" aria-label="Learn the Technology">How It Works</a>
+            <a href="dashboard.html" class="btn" aria-label="Launch NeuraSync Live Demo">Launch Live Demo</a>
+        </div>
+        
+        <div class="notify-form">
+            <p>Be the first to know when we launch.</p>
+            <form onsubmit="event.preventDefault(); alert('Thank you for your interest!');">
+                <input type="email" placeholder="Enter your email" required>
+                <button type="submit" class="btn-notify">Notify Me</button>
+            </form>
+        </div>
+    </section>
+    
+    <footer>
+        <p>&copy; 2025 NeuraSync. All rights reserved. This is a conceptual demo.</p>
+    </footer>
 
     <script>
         // --- Page Load Transition ---
@@ -463,364 +706,225 @@
             document.body.classList.add('page-loaded');
         });
 
-        // --- Smooth Page Navigation ---
-        document.querySelectorAll('.btn-link').forEach(link => {
+        // --- UPDATED Smooth Page Navigation (for ALL .btn links) ---
+        document.querySelectorAll('.action-area a.btn').forEach(link => {
             link.addEventListener('click', function(e) {
-                e.preventDefault(); 
+                e.preventDefault();
                 const destination = this.getAttribute('href');
-                document.body.classList.add('page-exit'); 
+                document.body.classList.add('page-exit');
+
                 setTimeout(() => {
-                    window.location.href = destination; 
-                }, 600); 
+                    window.location.href = destination;
+                }, 600);
             });
         });
 
-        // --- DOM ELEMENT REFERENCES ---
-        const faceImage = document.getElementById('face-image');
-        const emotionText = document.getElementById('emotion-text');
-        const mainActionButton = document.getElementById('main-action-button');
-        const sensorDisplay = document.getElementById('sensor-display');
-        const ctx = document.getElementById('sensorChart').getContext('2d');
-        const body = document.body;
-        const breathingGuide = document.getElementById('breathing-guide'); // FEATURE 1 Ref
+        // --- NEW: Cursor Glow Effect ---
+        const cursorGlow = document.querySelector('.cursor-glow');
+        if (cursorGlow) {
+            document.addEventListener('mousemove', (e) => {
+                cursorGlow.style.left = e.clientX + 'px';
+                cursorGlow.style.top = e.clientY + 'px';
+            });
 
-        // --- DATA AND STATE ---
-        const SENSORS = {
-            'Heart Rate': { color: '#FF6384', unit: ' BPM', lastValue: 0 },
-            'HRV': { color: '#36A2EB', unit: ' ms', lastValue: 0 },
-            'GSR': { color: '#FFCE56', unit: ' µS', lastValue: 0 },
-            'Skin Temp': { color: '#FFA500', unit: ' °C', lastValue: 0 },
-            'EMG': { color: '#9966FF', unit: ' µV', lastValue: 0 },
-            'Pulse Oximeter': { color: '#4BC0C0', unit: ' %', lastValue: 0 },
-            'Breathing': { color: '#F7464A', unit: ' /min', lastValue: 0 },
-            'Stress Score': { color: '#00A9FF', unit: '', lastValue: 0 }
-        };
-        
-        const EMOTION_DATA = {
-            'NEUTRAL': {
-                img: 'neutral.png', 
-                color: 'var(--neutral-color)',
-                ranges: { 'Heart Rate': [65, 75], 'HRV': [55, 75], 'GSR': [0.2, 0.8], 'Skin Temp': [33.5, 34], 'EMG': [1, 5], 'Pulse Oximeter': [98, 99], 'Breathing': [12, 16], 'Stress Score': [5, 15] }
-            },
-            'HAPPY': {
-                img: 'happy.png', 
-                color: 'var(--happy-color)',
-                ranges: { 'Heart Rate': [70, 85], 'HRV': [50, 70], 'GSR': [0.5, 1], 'Skin Temp': [33.5, 34.5], 'EMG': [2, 8], 'Pulse Oximeter': [98, 99], 'Breathing': [14, 18], 'Stress Score': [10, 25] }
-            },
-            'ANXIOUS': {
-                img: 'anxious.png', 
-                color: 'var(--anxious-color)',
-                ranges: { 'Heart Rate': [85, 110], 'HRV': [30, 45], 'GSR': [1.5, 3], 'Skin Temp': [33, 34], 'EMG': [10, 20], 'Pulse Oximeter': [96, 98], 'Breathing': [16, 22], 'Stress Score': [60, 80] }
-            },
-            'STRESSED': {
-                img: 'stress.png', 
-                color: 'var(--stressed-color)',
-                ranges: { 'Heart Rate': [95, 120], 'HRV': [20, 35], 'GSR': [2, 4], 'Skin Temp': [32, 33], 'EMG': [15, 25], 'Pulse Oximeter': [95, 97], 'Breathing': [18, 25], 'Stress Score': [75, 95] }
-            },
-            'ANGRY': {
-                img: 'angry.png', 
-                color: 'var(--angry-color)',
-                ranges: { 'Heart Rate': [100, 130], 'HRV': [15, 30], 'GSR': [3, 5], 'Skin Temp': [34, 35], 'EMG': [20, 30], 'Pulse Oximeter': [95, 97], 'Breathing': [20, 28], 'Stress Score': [85, 100] }
-            }
-        };
-
-        const EMOTIONS = Object.keys(EMOTION_DATA).filter(e => e !== 'NEUTRAL');
-        let simulationInterval;
-        let calmingInterval;
-        let simulationDurationTimer; 
-        let calmingDurationTimer;   
-
-        let isSimulationRunning = false;
-        let isCalmingActive = false;
-        let currentEmotion = 'NEUTRAL';
-        let previousEmotion = 'NEUTRAL';
-        let transitionStartTime = 0;
-        const EMOTION_TRANSITION_DURATION = 1000;
-
-        // --- CHART.JS SETUP ---
-        let chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: Object.keys(SENSORS).map(name => ({
-                    label: name, data: [], borderColor: SENSORS[name].color, backgroundColor: SENSORS[name].color + '33', borderWidth: 2, pointRadius: 0, tension: 0.4
-                }))
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, animation: { duration: 200 },
-                scales: {
-                    x: { ticks: { display: false }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-                    y: { beginAtZero: false, ticks: { color: 'white' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
-                },
-                plugins: { legend: { position: 'bottom', labels: { color: 'white', boxWidth: 20, padding: 20 } } }
-            }
-        });
-        
-        // Dynamically create sensor readout elements
-        Object.keys(SENSORS).forEach(name => {
-            const sensorEl = document.createElement('div');
-            sensorEl.className = 'sensor';
-            sensorEl.innerHTML = `
-                <div class="sensor-name">${name}</div>
-                <div class="sensor-value" id="val-${name.replace(/ /g, '')}">${SENSORS[name].lastValue.toFixed(1)}${SENSORS[name].unit}</div>
-            `;
-            sensorDisplay.appendChild(sensorEl);
-        });
-
-        // --- CORE FUNCTIONS ---
-
-        // --- FEATURE 2: New Log Function ---
-        function addLog(message, type = '') {
-            const logBox = document.getElementById('event-log');
-            if (!logBox) return; // Safety check
-            const now = new Date();
-            const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-            
-            let typeClass = '';
-            if (type === 'warn') typeClass = 'log-warn';
-            if (type === 'calm') typeClass = 'log-calm';
-
-            const newLogEntry = document.createElement('p');
-            newLogEntry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${typeClass}">${message}</span>`;
-            
-            logBox.prepend(newLogEntry); // Adds to the top
-
-            if (logBox.children.length > 20) {
-                logBox.removeChild(logBox.lastChild);
-            }
+            // Make glow bigger on interactive elements
+            document.querySelectorAll('a, button, .simulation, .info-block, .feature-block, input[type="email"]').forEach(el => {
+                el.addEventListener('mouseenter', () => cursorGlow.classList.add('pointer'));
+                el.addEventListener('mouseleave', () => cursorGlow.classList.remove('pointer'));
+            });
         }
 
-        function easeInOutQuad(t) {
-            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        // --- Utility for Scroll-based Parallax ---
+        function applyParallax() {
+            // REFINED: Now only targets non-hero elements
+            const parallaxElements = document.querySelectorAll('[data-parallax-speed]');
+            window.addEventListener('scroll', () => {
+                const scrollY = window.pageYOffset;
+                parallaxElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        const speed = parseFloat(el.getAttribute('data-parallax-speed'));
+                        const elementCenterY = rect.top + rect.height / 2;
+                        const viewportCenterY = window.innerHeight / 2;
+                        const offsetFromCenter = viewportCenterY - elementCenterY;
+
+                        const transformY = offsetFromCenter * (speed - 1) * 0.05;
+                        el.style.transform = `translateY(${transformY}px)`;
+                    }
+                });
+            });
         }
-        
-        function getRandomValue(min, max, volatility = 1) { 
-            return (Math.random() * (max - min) + min) + (Math.random() - 0.5) * volatility; 
+        applyParallax();
+
+        // --- Mouse-based Tilt Effect for Hero Elements ---
+        const heroSection = document.querySelector('.hero-section');
+        if (heroSection) {
+            heroSection.addEventListener('mousemove', (e) => {
+                const rect = heroSection.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const mouseX = e.clientX - centerX;
+                const mouseY = e.clientY - centerY;
+
+                heroSection.querySelectorAll('.info-block, .watch-container img').forEach(el => {
+                    const tiltX = (mouseY / rect.height) * 10;
+                    const tiltY = (mouseX / rect.width) * -10;
+                    el.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+                });
+            });
+
+            heroSection.addEventListener('mouseleave', () => {
+                heroSection.querySelectorAll('.info-block, .watch-container img').forEach(el => {
+                    el.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`; // Reset transform
+                });
+            });
         }
 
-        // UPDATED: Calls addLog
-        function updateFaceAndText(emotion) {
-            if (emotion === currentEmotion) return; 
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const simContainer = document.querySelector('.simulation');
+            if (!simContainer) return;
+
+            const simComponents = simContainer.querySelectorAll('.component');
+            const centerImage = simContainer.querySelector('.centerImage');
             
-            // Log high-stress events
-            if (emotion === 'STRESSED' || emotion === 'ANXIOUS' || emotion === 'ANGRY') {
-                addLog(`High Emotion Detected: ${emotion}`, 'warn');
+            let currentContainerRotation = 0;
+            const containerRotationSpeed = 0.05; // Degrees per frame for the overall container spin
+            let mergeLoopTimeoutId; // To store the ID of the merge loop timeout
+            let animationFrameId; // To store the ID of the requestAnimationFrame for spin
+            let animationRunning = true; // Control the animation state
+
+            // Helper to immediately stop all CSS transitions
+            function disableTransitions() {
+                simContainer.classList.add('paused');
+            }
+            // Helper to re-enable CSS transitions
+            function enableTransitions() {
+                simContainer.classList.remove('paused');
             }
 
-            faceImage.classList.add('fade-out');
-            setTimeout(() => {
-                faceImage.src = EMOTION_DATA[emotion].img;
-                emotionText.textContent = emotion;
-                emotionText.style.color = EMOTION_DATA[emotion].color;
-                
-                if (emotion === 'CALMING PROTOCOL') {
-                    emotionText.classList.add('calming-glow');
-                } else {
-                    emotionText.classList.remove('calming-glow');
-                }
-                faceImage.classList.remove('fade-out');
-            }, EMOTION_TRANSITION_DURATION * 0.3); 
-            
-            previousEmotion = currentEmotion; // Store the state we are transitioning *from*
-            currentEmotion = emotion;
-            transitionStartTime = Date.now(); // Start the transition timer
-        }
+            function positionSimComponents() {
+                const containerSize = simContainer.offsetWidth;
+                const componentSize = simComponents[0].offsetWidth;
+                const radius = (containerSize / 2) - (componentSize / 2) - 30;
+                const total = simComponents.length;
 
-        // UPDATED: Adds pulsing alert logic (Feature 3)
-        function updateSensorData(targetEmotionData, transitionProgress = 1) {
-            const now = new Date();
-            const timeLabel = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-            
-            chart.data.labels.push(timeLabel);
-            if (chart.data.labels.length > 30) { 
-                chart.data.labels.shift();
-                chart.data.datasets.forEach(dataset => dataset.data.shift());
-            }
-
-            chart.data.datasets.forEach(dataset => {
-                const sensorName = dataset.label;
-                if (!targetEmotionData.ranges[sensorName]) return; // Safety check
-                
-                const [targetMin, targetMax] = targetEmotionData.ranges[sensorName];
-                
-                let value;
-                if (transitionProgress < 1) { 
-                    const startValue = SENSORS[sensorName].lastValue;
-                    const prevRanges = EMOTION_DATA[previousEmotion]?.ranges[sensorName] || targetEmotionData.ranges[sensorName];
+                simComponents.forEach((comp, i) => {
+                    const angle = (i / total) * Math.PI * 2;
+                    const x = radius * Math.cos(angle) + containerSize / 2 - componentSize / 2;
+                    const y = radius * Math.sin(angle) + containerSize / 2 - componentSize / 2;
                     
-                    const interpolatedValue = startValue + 
-                        (getRandomValue(targetMin, targetMax) - startValue) * easeInOutQuad(transitionProgress);
-                    value = interpolatedValue;
-                } else { 
-                    value = getRandomValue(targetMin, targetMax);
-                }
-
-                if (sensorName === 'HRV') {
-                    const hrDataset = chart.data.datasets.find(ds => ds.label === 'Heart Rate');
-                    if (hrDataset && hrDataset.data.length > 0) {
-                        const currentHR = hrDataset.data[hrDataset.data.length - 1];
-                        const hrInfluence = (currentHR - 70) * -0.3; 
-                        value = Math.max(targetMin, Math.min(targetMax, value + hrInfluence));
-                    }
-                }
-
-                dataset.data.push(value);
-                SENSORS[sensorName].lastValue = value;
-                const valueEl = document.getElementById(`val-${sensorName.replace(/ /g, '')}`);
-                if(valueEl) { // Safety check
-                    valueEl.textContent = value.toFixed(1) + SENSORS[sensorName].unit;
-                
-                    // --- FEATURE 3: Pulsing Alert Logic ---
-                    const sensorEl = valueEl.parentElement; // Get the parent .sensor div
-                    if ((sensorName === 'Stress Score' && value > 80) || (sensorName === 'Heart Rate' && value > 110)) {
-                        sensorEl.classList.add('alert');
-                    } else {
-                        sensorEl.classList.remove('alert');
-                    }
-                    // --- End Feature 3 Logic ---
-                }
-
-            });
-            chart.update('none'); 
-        }
-
-        // UPDATED: Shows/hides breathing guide (Feature 1) and logs (Feature 2)
-        function resetSimulationState() {
-            clearInterval(simulationInterval);
-            clearTimeout(simulationDurationTimer);
-            clearInterval(calmingInterval);
-            clearTimeout(calmingDurationTimer);
-            
-            if (isCalmingActive) { // Only log if we were just calming
-                addLog('State returned to NEUTRAL.', 'calm');
+                    comp.style.left = `${x}px`;
+                    comp.style.top = `${y}px`;
+                    comp.style.opacity = '1';
+                    comp.style.transform = `rotate(${-currentContainerRotation}deg)`; 
+                });
+                centerImage.style.display = 'none'; // Ensure watch is hidden when components are spread
+                centerImage.style.opacity = '0';
+                centerImage.style.transform = `translate(-50%, -50%) scale(0.8) rotate(0deg)`;
             }
-            
-            isSimulationRunning = false;
-            isCalmingActive = false;
-            body.classList.remove('calming-active');
-            breathingGuide.classList.remove('show'); // Hide breathing guide
-            updateFaceAndText('NEUTRAL');
-            mainActionButton.textContent = "Restart Simulation";
-            mainActionButton.disabled = false;
-        }
 
-        function startSimulation() {
-            if (isSimulationRunning) return;
+            function animateContainerSpin() {
+                if (!animationRunning) {
+                    cancelAnimationFrame(animationFrameId); // Stop the animation loop
+                    return; 
+                }
 
-            resetSimulationState(); 
-            currentEmotion = 'DETECTING...'; 
-            emotionText.textContent = 'DETECTING...';
-            emotionText.style.color = EMOTION_DATA['NEUTRAL'].color; 
-            faceImage.src = 'neutral.png'; 
-            addLog('NeuraSync Simulation Activated.');
+                currentContainerRotation = (currentContainerRotation + containerRotationSpeed) % 360;
+                simContainer.style.transform = `rotate(${currentContainerRotation}deg)`;
 
-            mainActionButton.textContent = "Activate Calming";
-            mainActionButton.disabled = false; 
+                simComponents.forEach(comp => {
+                    comp.style.transform = `rotate(${-currentContainerRotation}deg)`;
+                });
 
-            isSimulationRunning = true;
-            let timeElapsed = 0;
-            const simulationLength = 60000; 
-            const updateInterval = 1500; 
+                animationFrameId = requestAnimationFrame(animateContainerSpin);
+            }
 
-            simulationInterval = setInterval(() => {
-                timeElapsed += updateInterval;
-                if (timeElapsed >= simulationLength) {
-                    clearInterval(simulationInterval);
-                    startCalmingProtocol(); 
+            function startMergeLoop() {
+                if (!animationRunning) {
                     return;
                 }
-                previousEmotion = currentEmotion; 
-                const randomEmotion = EMOTIONS[Math.floor(Math.random() * EMOTIONS.length)];
-                updateFaceAndText(randomEmotion);
-                updateSensorData(EMOTION_DATA[randomEmotion]);
 
-            }, updateInterval);
+                enableTransitions(); // Ensure transitions are on when animation starts
 
-            simulationDurationTimer = setTimeout(() => {
-                clearInterval(simulationInterval);
-                startCalmingProtocol();
-            }, simulationLength);
-        }
+                // 1. Components move to center and fade out
+                simComponents.forEach(comp => {
+                    comp.style.left = `${simContainer.offsetWidth / 2 - comp.offsetWidth / 2}px`;
+                    comp.style.top = `${simContainer.offsetHeight / 2 - comp.offsetHeight / 2}px`;
+                    comp.style.opacity = '0';
+                });
 
-        // UPDATED: Shows breathing guide (Feature 1) and logs (Feature 2)
-        function startCalmingProtocol(manual = false) {
-            if (isCalmingActive) return;
+                // 2. Center image appears and fades in, with a subtle scale/rotate
+                mergeLoopTimeoutId = setTimeout(() => {
+                    if (!animationRunning) { disableTransitions(); return; } 
+                    centerImage.style.display = 'block';
+                    centerImage.style.opacity = '1';
+                    centerImage.style.transform = `translate(-50%, -50%) scale(1.1) rotate(360deg)`;
+                }, 800);
 
-            addLog('Calming Protocol Initiated.', 'calm');
-            breathingGuide.classList.add('show'); // Show breathing guide
+                // 3. Center image holds and then fades out
+                mergeLoopTimeoutId = setTimeout(() => {
+                    if (!animationRunning) { disableTransitions(); return; } 
+                    centerImage.style.opacity = '0';
+                    centerImage.style.transform = `translate(-50%, -50%) scale(0.8) rotate(0deg)`;
+                }, 2200);
 
-            clearInterval(simulationInterval);
-            clearTimeout(simulationDurationTimer); 
-            isSimulationRunning = false;
+                // 4. Components return to position and become visible for next loop
+                mergeLoopTimeoutId = setTimeout(() => {
+                    if (!animationRunning) { disableTransitions(); return; } 
+                    positionSimComponents(); // Reposition components and hide watch
+                    simComponents.forEach(comp => comp.style.opacity = '1'); // Make them visible again
+                    
+                    // Call itself to loop the animation
+                    mergeLoopTimeoutId = setTimeout(startMergeLoop, 1000); // Start next merge after 1 second
+                }, 2700);
+            }
 
-            isCalmingActive = true;
-            body.classList.add('calming-active');
-            updateFaceAndText('CALMING PROTOCOL'); 
-            mainActionButton.textContent = "CALMING...";
-            mainActionButton.disabled = true; 
-
-            const calmData = EMOTION_DATA['NEUTRAL'];
-            let progress = 0;
-            const duration = 15000; // 15 seconds
-            const steps = 150; 
-            const stepDuration = duration / steps;
-            
-            previousEmotion = currentEmotion; // Store the state we are calming *from*
-
-            calmingInterval = setInterval(() => {
-                progress += 1 / steps;
-                if (progress >= 1) {
-                    clearInterval(calmingInterval);
-                    // Let the timeout handle the reset
-                    return;
+            // --- REVERTED: Function to TOGGLE animation ---
+            function toggleAnimation() {
+                animationRunning = !animationRunning;
+                if (animationRunning) {
+                    enableTransitions(); // Re-enable transitions for smooth restart
+                    startMergeLoop(); // Resume the merge loop
+                    animateContainerSpin(); // Resume the continuous spin
+                } else {
+                    // Clear any pending timeouts for the merge loop
+                    clearTimeout(mergeLoopTimeoutId);
+                    cancelAnimationFrame(animationFrameId); // Stop the spin animation immediately
+                    disableTransitions(); // Immediately stop all CSS transitions for instant halt
                 }
-                updateSensorData(calmData, progress); // Transition to neutral data
-            }, stepDuration);
+            }
 
-            calmingDurationTimer = setTimeout(() => {
-                clearInterval(calmingInterval);
-                isCalmingActive = false;
-                body.classList.remove('calming-active');
-                breathingGuide.classList.remove('show'); // Hide breathing guide
-                addLog('State returned to NEUTRAL.', 'calm');
-                updateFaceAndText('NEUTRAL'); 
-                mainActionButton.textContent = "Restart Simulation";
-                mainActionButton.disabled = false;
-                currentEmotion = 'NEUTRAL'; 
-            }, duration);
-        }
+            // --- REVERTED: Add click listener to TOGGLE animation ---
+            simContainer.addEventListener('click', toggleAnimation);
 
+            // Initial positioning of components
+            positionSimComponents();
 
-        // --- INITIALIZATION ---
-        window.onload = () => {
-            // Pre-load images
-            Object.values(EMOTION_DATA).forEach(data => {
-                const img = new Image();
-                img.src = data.img;
-            });
+            // Start the animations immediately
+            animateContainerSpin(); // Start the continuous spin
+            mergeLoopTimeoutId = setTimeout(startMergeLoop, 2000); // 2 second initial delay before first merge
 
-            // Set initial sensor values to neutral
-            Object.keys(SENSORS).forEach(name => {
-                const [min, max] = EMOTION_DATA['NEUTRAL'].ranges[name];
-                SENSORS[name].lastValue = getRandomValue(min, max);
-            });
+        });
 
-            updateFaceAndText('NEUTRAL'); 
-            updateSensorData(EMOTION_DATA['NEUTRAL']); 
-            mainActionButton.textContent = "Activate NeuraSync";
-            mainActionButton.disabled = false;
-            addLog('System Initialized. Status: NEUTRAL.');
-            
-            mainActionButton.addEventListener('click', () => {
-                if (!isSimulationRunning && !isCalmingActive && mainActionButton.textContent === "Activate NeuraSync") {
-                    startSimulation(); 
-                } else if (isSimulationRunning && mainActionButton.textContent === "Activate Calming") {
-                    startCalmingProtocol(true); 
-                } else if (mainActionButton.textContent === "Restart Simulation") { 
-                    location.reload(); 
+        // --- Fade-in Animation on Scroll (Staggered) for other sections ---
+        const sectionsObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    entry.target.style.setProperty('--delay', `${index * 0.2}s`);
+                    entry.target.style.animationPlayState = 'running';
+                    sectionsObserver.unobserve(entry.target);
                 }
             });
-        };
+        }, { threshold: 0.1 });
+
+        // UPDATED: Now includes .features-section
+        document.querySelectorAll('main, section:not(.peripherals-section)').forEach(el => {
+            el.style.animationPlayState = 'paused';
+            sectionsObserver.observe(el);
+        });
+
     </script>
 </body>
 </html>
